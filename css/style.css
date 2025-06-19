@@ -51,33 +51,26 @@ header {
     box-shadow: 0 2px 5px var(--shadow-light);
     padding: 15px 0;
     border-bottom: 1px solid #eee;
-    position: relative;
-    /* Added for mobile menu positioning */
-    z-index: 1000;
-    /* Ensure header is on top */
 }
 
 .header-content {
     display: flex;
     justify-content: flex-start;
+    /* Aligned items to the left */
     align-items: center;
     flex-wrap: wrap;
     gap: 20px;
+    /* Space between nav and contact button */
 }
 
 /* Navigation */
-nav {
-    flex-grow: 1;
-    /* Allows nav to take available space */
-}
-
 nav ul {
     list-style: none;
     padding: 0;
     margin: 0;
     display: flex;
-    /* Default to flex for desktop */
     justify-content: flex-start;
+    /* Aligns nav items to the left */
     flex-wrap: wrap;
 }
 
@@ -95,22 +88,6 @@ nav ul li a {
 
 nav ul li a:hover {
     color: var(--blue-theme-color);
-}
-
-/* Hamburger menu button - Hidden by default */
-.hamburger-menu {
-    display: none;
-    /* Hide on desktop */
-    background: none;
-    border: none;
-    font-size: 1.8em;
-    color: var(--text-color);
-    cursor: pointer;
-    padding: 5px;
-    margin-right: 15px;
-    /* Space from nav items */
-    order: -1;
-    /* Place it first in the flex order */
 }
 
 /* General Button Style */
@@ -374,7 +351,6 @@ footer {
 footer p {
     margin: 0;
     font-size: 0.8em;
-    /* MODIFIED: Changed to match .footer-email font-size */
 }
 
 /* Social Icons in Footer */
@@ -548,6 +524,8 @@ footer p {
     /* Match other content sections */
     box-shadow: 0 4px 10px var(--shadow-medium);
     /* Match other content sections */
+    margin-bottom: 15px;
+    /* Added margin-bottom to separate from the new text */
 }
 
 .powerbi-embed-container iframe {
@@ -561,90 +539,37 @@ footer p {
 
 .content-section .powerbi-embed-container {
     max-width: 960px;
-    margin-bottom: 15px;
-    /* Reduced margin to bring text closer */
+    /* Reduced margin-bottom here since it's now on the general .powerbi-embed-container */
 }
 
-/* New style for the dashboard tip */
+/* NEW: Style for the dashboard tip text */
 .dashboard-tip {
-    font-size: 0.9em;
-    /* Slightly smaller than regular content-section p for a tip */
-    color: #777;
-    /* Smooth gray color */
     text-align: center;
+    font-size: 0.9em;
+    /* Slightly smaller than main text for a tip */
+    color: #6c757d;
+    /* A common gray color */
     margin-top: 10px;
     /* Space above the tip */
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     /* Space below the tip */
 }
-
 
 /* Basic Responsiveness for all pages */
 @media (max-width: 768px) {
     .header-content {
-        flex-direction: row;
-        /* Keep elements in a row */
-        justify-content: space-between;
-        /* Space out hamburger, nav, and contact */
+        flex-direction: column;
         align-items: center;
         gap: 10px;
     }
 
-    .hamburger-menu {
-        display: block;
-        /* Show hamburger on mobile */
-    }
-
-    nav {
-        flex-grow: 0;
-        /* Don't let nav grow */
-    }
-
     nav ul {
-        flex-direction: column;
-        /* Stack nav items vertically */
-        background-color: var(--white-bg);
-        position: absolute;
-        top: 100%;
-        /* Position below the header */
-        left: 0;
-        width: 100%;
-        box-shadow: 0 2px 5px var(--shadow-light);
-        border-top: 1px solid #eee;
-        overflow: hidden;
-        /* Hide overflow when not active */
-        max-height: 0;
-        /* Collapse menu by default */
-        transition: max-height 0.3s ease-in-out;
-        /* Smooth transition for height */
-    }
-
-    nav ul.active {
-        max-height: 300px;
-        /* Expand menu when active, adjust as needed */
-        overflow: visible;
-    }
-
-    nav ul li {
-        margin: 0;
-        text-align: center;
-        border-bottom: 1px solid #f0f0f0;
-        /* Separator for menu items */
-    }
-
-    nav ul li:last-child {
-        border-bottom: none;
-    }
-
-    nav ul li a {
-        display: block;
-        /* Make links full width of list item */
-        padding: 15px 0;
+        justify-content: center;
+        margin-bottom: 10px;
     }
 
     .contact-button {
         margin-left: 0;
-        /* Remove auto margin */
     }
 
     .hero-container {
@@ -766,6 +691,11 @@ footer p {
         /* Allow it to take full width of the container on smaller screens */
         padding-bottom: 75%;
     }
+
+    .dashboard-tip {
+        font-size: 0.85em;
+        /* Slightly smaller on mobile for readability */
+    }
 }
 
 @media (max-width: 480px) {
@@ -812,5 +742,10 @@ footer p {
     /* Power BI Embed Mobile Adjustments */
     .content-section .powerbi-embed-container {
         padding-bottom: 85%;
+    }
+
+    .dashboard-tip {
+        font-size: 0.8em;
+        /* Even smaller on very small mobile screens */
     }
 }
