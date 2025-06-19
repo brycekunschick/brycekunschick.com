@@ -7,14 +7,18 @@
     <title>My Projects</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-        integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+        integrity="sha512-R7YplWlW7r+3Q52v9Bv8vT3Z5pB8w4kK2tQnQ8B8hS8oJ8eG8uH8d7e9C7s9d9fQ7k7o7e7d7u7i7j7x7y7z7A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 
 <body>
     <header>
         <div class="container header-content">
+            <button class="hamburger-menu" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
             <nav>
-                <ul>
+                <ul class="nav-links">
                     <li><a href="index.html">Home</a></li>
                     <li><a href="about.html">About Me</a></li>
                     <li><a href="fishing-dashboard.html">Fishing Dashboard</a></li>
@@ -79,7 +83,7 @@
                             <li>Store all catches and weather data in a SQL database, as seen in the <a
                                     href="fishing-dashboard.html">fishing dashboard</a>.</li>
                             <li>Each fish I catch is logged in Excel with useful information such as Date, Length,
-                                Width, Geographic Coordinates.</li>
+                                Weight, and Geographic Coordinates.</li>
                             <li>Using Python code, I get the weather data for each location by making requests to the
                                 National Weather Service API.</li>
                             <li>Python scripts format the data into CSVs, which are imported into their corresponding
@@ -111,6 +115,17 @@
             <p>&copy; 2025 Bryce Kunschick. All rights reserved.</p>
         </div>
     </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const hamburgerMenu = document.querySelector('.hamburger-menu');
+            const navLinks = document.querySelector('.nav-links');
+
+            hamburgerMenu.addEventListener('click', function () {
+                navLinks.classList.toggle('active');
+            });
+        });
+    </script>
 </body>
 
 </html>
