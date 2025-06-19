@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Projects</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+
+<body>
+    <header>
+        <div class="container header-content">
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About Me</a></li>
+                    <li><a href="fishing-dashboard.html">Fishing Dashboard</a></li>
+                    <li><a href="my-projects.html">My Projects</a></li>
+                </ul>
+            </nav>
+            <a href="contact.html" class="button contact-button">Contact</a>
+        </div>
+    </header>
+
+    <main>
+        <section class="content-section">
+            <div class="container">
+                <h2>My Projects</h2>
+                <p>
+                    Here are some of the projects I have been working on. Click on the project titles to see their
+                    GitHub repositories!
+                </p>
+                <div class="project-list">
+                    <div class="project-item">
+                        <div class="project-header">
+                            <h3><a href="https://github.com/brycekunschick/OptionsAlgo" target="_blank"
+                                    rel="noopener noreferrer">Options Trading Algorithm</a></h3>
+                            <img src="img/options.png" alt="Options trading icon" class="project-icon">
+                        </div>
+                        <p><strong>July 2024 - Present</strong></p>
+                        <ul>
+                            <li>Automated trading based on pricing inefficiencies of options contracts.</li>
+                            <li>Using the Robinhood API, I get live quotes on options contracts.</li>
+                            <li>With data transformations, potential trades based on my hypothesis, SAK, are identified.
+                            </li>
+                            <li>If a trade is identified, a limit order is placed through the API in the Python script.
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="project-item">
+                        <div class="project-header">
+                            <h3><a href="https://github.com/brycekunschick/FishingReport" target="_blank"
+                                    rel="noopener noreferrer">AI Fishing Report</a></h3>
+                            <img src="img/report.png" alt="AI fishing report icon" class="project-icon">
+                        </div>
+                        <p><strong>April 2025</strong></p>
+                        <ul>
+                            <li>Get live weather and water data for an AI-generated fishing report in different spots.
+                            </li>
+                            <li>Data is collected from United States Geological Survey and the National Weather Service
+                                by web scraping with Beautiful Soup.</li>
+                            <li>The collected data is used to create multiple variables which prompt a Local LLM
+                                (gemma3:4b) for a fishing report based on real-time data.</li>
+                        </ul>
+                    </div>
+
+                    <div class="project-item">
+                        <div class="project-header">
+                            <h3><a href="https://github.com/brycekunschick/FishingData" target="_blank"
+                                    rel="noopener noreferrer">Fishing Database</a></h3>
+                            <img src="img/fishdb.png" alt="Fishing database icon" class="project-icon">
+                        </div>
+                        <p><strong>August 2023 - Present</strong></p>
+                        <ul>
+                            <li>Store all catches and weather data in a SQL database, as seen in the <a
+                                    href="fishing-dashboard.html">fishing dashboard</a>.</li>
+                            <li>Each fish I catch is logged in Excel with useful information such as Date, Length,
+                                Width, Geographic Coordinates.</li>
+                            <li>Using Python code, I get the weather data for each location by making requests to the
+                                National Weather Service API.</li>
+                            <li>Python scripts format the data into CSVs, which are imported into their corresponding
+                                tables in a SQL Server Database.</li>
+                            <li>Using a SQL View, I connect each catch to all of the weather data for the corresponding
+                                location, date, and time.</li>
+                            <li>The SQL View and tables are queried by a Power BI Report, and embedded in this site as
+                                the Fishing Dashboard.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container footer-content">
+            <div class="social-icons-footer">
+                <a href="https://www.linkedin.com/in/brycekunschick/" target="_blank" rel="noopener noreferrer"
+                    aria-label="LinkedIn Profile">
+                    <i class="fab fa-linkedin"></i>
+                </a>
+                <a href="https://github.com/brycekunschick" target="_blank" rel="noopener noreferrer"
+                    aria-label="GitHub Profile">
+                    <i class="fab fa-github"></i>
+                </a>
+                <span class="footer-email">kunschickbryce@gmail.com</span>
+            </div>
+            <p>&copy; 2025 Bryce Kunschick. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+
+</html>
