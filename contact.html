@@ -13,7 +13,12 @@
 <body>
     <header>
         <div class="container header-content">
-            <nav>
+            <div class="mobile-menu-button">
+                <button class="hamburger-button" aria-expanded="false" aria-controls="mobile-nav">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            <nav class="desktop-nav">
                 <ul>
                     <li><a href="index.html">Home</a></li>
                     <li><a href="about.html">About Me</a></li>
@@ -22,6 +27,14 @@
                 </ul>
             </nav>
             <a href="contact.html" class="button contact-button">Contact</a>
+            <nav class="mobile-nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About Me</a></li>
+                    <li><a href="fishing-dashboard.html">Fishing Dashboard</a></li>
+                    <li><a href="my-projects.html">My Projects</a></li>
+                </ul>
+            </nav>
         </div>
     </header>
 
@@ -70,6 +83,19 @@
             <p>&copy; 2025 Bryce Kunschick. All rights reserved.</p>
         </div>
     </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const hamburgerButton = document.querySelector('.hamburger-button');
+            const mobileNav = document.querySelector('.mobile-nav');
+
+            hamburgerButton.addEventListener('click', () => {
+                const isExpanded = hamburgerButton.getAttribute('aria-expanded') === 'true' || false;
+                hamburgerButton.setAttribute('aria-expanded', !isExpanded);
+                mobileNav.classList.toggle('open');
+            });
+        });
+    </script>
 </body>
 
 </html>

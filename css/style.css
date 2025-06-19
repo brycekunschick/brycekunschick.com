@@ -51,16 +51,35 @@ header {
     box-shadow: 0 2px 5px var(--shadow-light);
     padding: 15px 0;
     border-bottom: 1px solid #eee;
+    position: relative;
+    /* To contain absolute positioned mobile menu */
 }
 
 .header-content {
     display: flex;
-    justify-content: flex-start;
-    /* Aligned items to the left */
+    justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 20px;
-    /* Space between nav and contact button */
+}
+
+/* Mobile Menu Button */
+.mobile-menu-button {
+    display: none;
+    /* Hidden by default on desktop */
+}
+
+.hamburger-button {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 10px;
+}
+
+.hamburger-button:focus {
+    outline: none;
+    /* Add a visual focus style if needed */
 }
 
 /* Navigation */
@@ -68,14 +87,12 @@ nav ul {
     list-style: none;
     padding: 0;
     margin: 0;
-    display: flex;
-    justify-content: flex-start;
-    /* Aligns nav items to the left */
-    flex-wrap: wrap;
 }
 
 nav ul li {
     margin: 0 15px;
+    display: inline-block;
+    /* For horizontal desktop nav */
 }
 
 nav ul li a {
@@ -88,6 +105,46 @@ nav ul li a {
 
 nav ul li a:hover {
     color: var(--blue-theme-color);
+}
+
+.mobile-nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: var(--white-bg);
+    width: 100%;
+    box-shadow: 0 4px 8px var(--shadow-medium);
+    z-index: 10;
+    border-bottom: 1px solid #eee;
+}
+
+.mobile-nav.open {
+    display: block;
+}
+
+.mobile-nav ul {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.mobile-nav ul li {
+    display: block;
+    margin: 0;
+    padding: 15px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    width: 100%;
+    text-align: left;
+}
+
+.mobile-nav ul li:last-child {
+    border-bottom: none;
+}
+
+.mobile-nav ul li a {
+    display: block;
+    width: 100%;
+    padding: 0;
 }
 
 /* General Button Style */
@@ -123,8 +180,6 @@ nav ul li a:hover {
 }
 
 .contact-button {
-    margin-left: auto;
-    /* Pushes the contact button to the far right */
     flex-shrink: 0;
 }
 
@@ -219,7 +274,6 @@ main {
     z-index: auto;
 }
 
-
 /* General Content Section for About, Dashboard, Projects */
 .content-section {
     background-color: var(--white-bg);
@@ -310,7 +364,6 @@ main {
     /* Prevent icon from shrinking on smaller screens */
 }
 
-
 .project-item p {
     font-size: 1em;
     /* Adjust paragraph font size */
@@ -385,7 +438,6 @@ footer p {
     white-space: nowrap;
     /* Prevent email from breaking onto multiple lines */
 }
-
 
 /* About Page Specific Styles - New Hobby Sections */
 .about-hobby-item {
@@ -555,21 +607,25 @@ footer p {
     /* Space below the tip */
 }
 
-/* Basic Responsiveness for all pages */
+/* Basic Responsiveness */
 @media (max-width: 768px) {
+    .desktop-nav {
+        display: none;
+        /* Hide desktop navigation on mobile */
+    }
+
+    .mobile-menu-button {
+        display: block;
+        /* Show hamburger button on mobile */
+    }
+
     .header-content {
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
+        justify-content: space-between;
+        /* Keep space between hamburger and contact */
     }
 
-    nav ul {
-        justify-content: center;
-        margin-bottom: 10px;
-    }
-
-    .contact-button {
-        margin-left: 0;
+    .mobile-nav ul li {
+        text-align: left;
     }
 
     .hero-container {
