@@ -4,104 +4,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Me</title>
+    <title>About Me | Bryce Kunschick</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-        integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 
 <body>
-    <header>
-        <div class="container header-content">
-            <div class="mobile-menu-button">
-                <button class="hamburger-button" aria-expanded="false" aria-controls="mobile-nav">
-                    <i class="fas fa-bars"></i>
-                </button>
+
+    <header class="navbar">
+        <div class="container nav-container">
+
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
             </div>
-            <nav class="desktop-nav">
-                <ul>
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="about.html">About Me</a></li>
-                    <li><a href="fishing-dashboard.html">Fishing Dashboard</a></li>
-                    <li><a href="my-projects.html">My Projects</a></li>
-                </ul>
+
+            <a href="index.html" class="logo">
+                <span class="logo-initials">BK</span>
+                <span class="logo-text">Bryce Kunschick</span>
+            </a>
+
+            <a href="contact.html" class="mobile-contact-btn">Contact</a>
+
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="about.html" class="nav-link active">About Me</a>
+                <a href="fishing-dashboard.html" class="nav-link">Fishing Dashboard</a>
+                <a href="my-projects.html" class="nav-link">My Projects</a>
+                <a href="contact.html" class="nav-link btn-nav-cta desktop-cta">Contact</a>
             </nav>
-            <a href="contact.html" class="button contact-button">Contact</a>
-            <nav class="mobile-nav">
-                <ul>
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="about.html">About Me</a></li>
-                    <li><a href="fishing-dashboard.html">Fishing Dashboard</a></li>
-                    <li><a href="my-projects.html">My Projects</a></li>
-                </ul>
-            </nav>
+
         </div>
     </header>
 
-    <main>
-        <section class="content-section">
-            <div class="container">
-                <h2>About Me</h2>
+    <section class="page-header">
+        <div class="container">
+            <h1 class="highlight">My Journey</h1>
+            <p>From Pennsylvania to the Rockies and back again.</p>
+        </div>
+    </section>
 
-                <div class="about-hobby-item">
-                    <div class="about-hobby-text">
-                        <h3>Hiking</h3>
-                        <p>
-                            I have been very lucky to live in 2 states with amazing hiking over the last few years: West
-                            Virginia and Colorado.
-                            I love to find new trails and enjoy some incredible views!
-                        </p>
-                    </div>
-                    <div class="about-hobby-image">
-                        <img src="img/about2.jpeg" alt="WV Hiking">
-                    </div>
-                </div>
+    <section class="timeline-section">
 
-                <div class="about-hobby-item reverse-layout">
-                    <div class="about-hobby-text">
-                        <h3>Fishing</h3>
-                        <p>
-                            One of my favorite things to do is go fishing. Take a look at the <a
-                                href="fishing-dashboard.html">fishing dashboard</a> I
-                            created for an interactive map showing every fish I have caught since August 2023!
-                        </p>
-                    </div>
-                    <div class="about-hobby-image">
-                        <img src="img/about3.jpeg" alt="My biggest musky">
-                    </div>
-                </div>
-
+        <div class="timeline-tracker">
+            <div class="tracker-date" id="trackerDate">2016</div>
+            <div class="tracker-bar">
+                <div class="tracker-progress" id="trackerProgress"></div>
             </div>
-        </section>
-    </main>
+        </div>
+
+        <div class="container timeline-container">
+            <div class="timeline-line"></div>
+
+            <div class="timeline-item" data-date="2016 - 2020">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content slide-in-left">
+                    <div class="content-header">
+                        <img src="img/canonmcmillan.png" alt="Canon McMillan Logo" class="timeline-logo">
+                        <div>
+                            <h3>Canon-McMillan High School</h3>
+                            <span class="location"><i class="fas fa-map-marker-alt"></i> Canonsburg, PA</span>
+                            <span class="date-badge">2016 - May 2020</span>
+                        </div>
+                    </div>
+                    <p>I went to high school in my hometown of Canonsburg, PA. I played on the baseball team and worked
+                        at TopGolf.</p>
+                </div>
+            </div>
+
+            <div class="timeline-item" data-date="2020 - 2024">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content slide-in-right">
+                    <div class="content-header">
+                        <img src="img/WVU.png" alt="WVU Logo" class="timeline-logo">
+                        <div>
+                            <h3>West Virginia University</h3>
+                            <span class="location"><i class="fas fa-map-marker-alt"></i> Morgantown, WV</span>
+                            <span class="date-badge">Aug 2020 - May 2024</span>
+                        </div>
+                    </div>
+                    <p>I got my undergraduate education at WVU. After changing my major twice, I finally got it right
+                        when I picked Management Information Systems (MIS), as I soon discovered I loved working with
+                        data and automation. I also had minors in Finance and Data Analytics.</p>
+                    <p class="mt-2">Outside of classes, I loved enjoying the hiking and fishing that West Virginia had
+                        to offer. Most weekends I would venture out into the nearby mountains and explore new places.
+                    </p>
+                </div>
+            </div>
+
+            <div class="timeline-item internship" data-date="Summer 2023">
+                <div class="timeline-dot internship-dot"></div>
+                <div class="timeline-content slide-in-left">
+                    <div class="content-header">
+                        <img src="img/Halliburton.png" alt="Halliburton Logo" class="timeline-logo">
+                        <div>
+                            <h3>Finance Technology Intern</h3>
+                            <span class="company">Halliburton</span>
+                            <span class="location"><i class="fas fa-map-marker-alt"></i> Houston, TX</span>
+                            <span class="date-badge badge-accent">May 2023 - Aug 2023</span>
+                        </div>
+                    </div>
+                    <p>Over this summer, I completed an internship at Halliburton in Houston, TX. I learned a lot about
+                        working in finance and the technologies behind it.
+                    </p>
+                    <p class="mt-2">I researched the company's upcoming SAP ERP
+                        migration, and helped with the implementation of SAP Concur for Travel and Expense processes.
+                    </p>
+                </div>
+            </div>
+
+            <div class="timeline-item" data-date="2024 - 2025">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content slide-in-right">
+                    <div class="content-header">
+                        <img src="img/Halliburton.png" alt="Halliburton Logo" class="timeline-logo">
+                        <div>
+                            <h3>Business Intelligence Developer</h3>
+                            <span class="company">Halliburton</span>
+                            <span class="location"><i class="fas fa-map-marker-alt"></i> Fort Lupton, CO</span>
+                            <span class="date-badge">Jun 2024 - Nov 2025</span>
+                        </div>
+                    </div>
+                    <p>After graduating college, I started a full time position at Halliburton. I supported accounting
+                        teams
+                        across the globe by automating their processes, and creating automated data pipelines. mostly
+                        dealing with data, and creating Power BI
+                        reports to assist with procedures and empower data-driven decisions.</p>
+                    <p class="mt-2">Using Alteryx, I created automated workflows connected to SAP ECC and S4, as well as
+                        other data sources, to automate reporting. I also developed reports in Power BI to support
+                        Accounting functions and empower data-driven decisions.
+                    </p>
+                </div>
+            </div>
+
+            <div class="timeline-item" data-date="2025 - Present">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content slide-in-left">
+                    <div class="content-header">
+                        <img src="img/maxim.png" alt="Maxim Logo" class="timeline-logo">
+                        <div>
+                            <h3>Data Solutions Specialist</h3>
+                            <span class="company">Maxim Crane Works</span>
+                            <span class="location"><i class="fas fa-map-marker-alt"></i> Canonsburg, PA</span>
+                            <span class="date-badge badge-blue">Dec 2025 - Current</span>
+                        </div>
+                    </div>
+                    <p>I started a new position at Maxim Crane Works. I support various business functions by developing
+                        Power BI reports and working with cloud data architecture.</p>
+                </div>
+            </div>
+
+        </div>
+    </section>
 
     <footer>
-        <div class="container footer-content">
-            <div class="social-icons-footer">
-                <a href="https://www.linkedin.com/in/brycekunschick/" target="_blank" rel="noopener noreferrer"
-                    aria-label="LinkedIn Profile">
-                    <i class="fab fa-linkedin"></i>
-                </a>
-                <a href="https://github.com/brycekunschick" target="_blank" rel="noopener noreferrer"
-                    aria-label="GitHub Profile">
-                    <i class="fab fa-github"></i>
-                </a>
-                <span class="footer-email">kunschickbryce@gmail.com</span>
+        <div class="container footer-container">
+            <div class="footer-left">
+                <p>&copy; 2025 Bryce Kunschick</p>
+                <a href="mailto:kunschickbryce@gmail.com" class="footer-email">kunschickbryce@gmail.com</a>
             </div>
-            <p>&copy; 2025 Bryce Kunschick. All rights reserved.</p>
+            <div class="footer-right">
+                <a href="https://www.linkedin.com/in/brycekunschick/" target="_blank"><i
+                        class="fab fa-linkedin"></i></a>
+                <a href="https://github.com/brycekunschick" target="_blank"><i class="fab fa-github"></i></a>
+            </div>
         </div>
     </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const hamburgerButton = document.querySelector('.hamburger-button');
-            const mobileNav = document.querySelector('.mobile-nav');
+        // Hamburger Menu
+        const hamburger = document.querySelector(".hamburger");
+        const navMenu = document.querySelector(".nav-menu");
 
-            hamburgerButton.addEventListener('click', () => {
-                const isExpanded = hamburgerButton.getAttribute('aria-expanded') === 'true' || false;
-                hamburgerButton.setAttribute('aria-expanded', !isExpanded);
-                mobileNav.classList.toggle('open');
+        hamburger.addEventListener("click", () => {
+            hamburger.classList.toggle("active");
+            navMenu.classList.toggle("active");
+        });
+
+        // Timeline Animation & Tracker Logic
+        const observerOptions = {
+            threshold: 0.2,
+            rootMargin: "0px 0px -100px 0px"
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+
+                    // Update Tracker Date
+                    const dateText = entry.target.getAttribute('data-date');
+                    if (dateText) {
+                        document.getElementById('trackerDate').textContent = dateText;
+                    }
+                }
             });
+        }, observerOptions);
+
+        const items = document.querySelectorAll('.timeline-item'); // Observe the item wrapper, not just content
+        items.forEach((el) => observer.observe(el));
+
+        // Scroll Progress Bar Logic
+        window.addEventListener('scroll', () => {
+            const timelineSection = document.querySelector('.timeline-section');
+            const sectionTop = timelineSection.offsetTop;
+            const sectionHeight = timelineSection.clientHeight;
+            const scrollY = window.scrollY;
+            const windowHeight = window.innerHeight;
+
+            // Calculate progress through timeline section
+            let percent = ((scrollY + windowHeight / 2) - sectionTop) / sectionHeight * 100;
+
+            // Clamp between 0 and 100
+            percent = Math.max(0, Math.min(100, percent));
+
+            document.getElementById('trackerProgress').style.height = percent + '%';
         });
     </script>
 </body>

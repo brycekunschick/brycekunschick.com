@@ -4,138 +4,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Projects</title>
+    <title>My Projects | Bryce Kunschick</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-        integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 
 <body>
-    <header>
-        <div class="container header-content">
-            <div class="mobile-menu-button">
-                <button class="hamburger-button" aria-expanded="false" aria-controls="mobile-nav">
-                    <i class="fas fa-bars"></i>
-                </button>
+
+    <header class="navbar">
+        <div class="container nav-container">
+
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
             </div>
-            <nav class="desktop-nav">
-                <ul>
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="about.html">About Me</a></li>
-                    <li><a href="fishing-dashboard.html">Fishing Dashboard</a></li>
-                    <li><a href="my-projects.html">My Projects</a></li>
-                </ul>
+
+            <a href="index.html" class="logo">
+                <span class="logo-initials">BK</span>
+                <span class="logo-text">Bryce Kunschick</span>
+            </a>
+
+            <a href="contact.html" class="mobile-contact-btn">Contact</a>
+
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="about.html" class="nav-link">About Me</a>
+                <a href="fishing-dashboard.html" class="nav-link">Fishing Dashboard</a>
+                <a href="my-projects.html" class="nav-link active">My Projects</a>
+                <a href="contact.html" class="nav-link btn-nav-cta desktop-cta">Contact</a>
             </nav>
-            <a href="contact.html" class="button contact-button">Contact</a>
-            <nav class="mobile-nav">
-                <ul>
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="about.html">About Me</a></li>
-                    <li><a href="fishing-dashboard.html">Fishing Dashboard</a></li>
-                    <li><a href="my-projects.html">My Projects</a></li>
-                </ul>
-            </nav>
+
         </div>
     </header>
 
-    <main>
-        <section class="content-section">
-            <div class="container">
-                <h2>My Projects</h2>
-                <p>
-                    Here are some of the projects I have been working on. Click on the project titles to see their
-                    GitHub repositories!
-                </p>
-                <div class="project-list">
-                    <div class="project-item">
-                        <div class="project-header">
-                            <h3><a href="https://github.com/brycekunschick/OptionsAlgo" target="_blank"
-                                    rel="noopener noreferrer">Options Trading Algorithm</a></h3>
-                            <img src="img/options.png" alt="Options trading icon" class="project-icon">
-                        </div>
-                        <p><strong>July 2024 - Present</strong></p>
-                        <ul>
-                            <li>Automated trading based on pricing inefficiencies of options contracts.</li>
-                            <li>Using the Robinhood API, I get live quotes on options contracts.</li>
-                            <li>With data transformations, potential trades based on my hypothesis, SAK, are identified.
-                            </li>
-                            <li>If a trade is identified, a limit order is placed through the API in the Python script.
-                            </li>
-                        </ul>
-                    </div>
+    <section class="page-header">
+        <div class="container">
+            <h1 class="highlight">Technical Projects</h1>
+            <p>A collection of my work in data automation, algorithmic trading, and analytics.</p>
+        </div>
+    </section>
 
-                    <div class="project-item">
-                        <div class="project-header">
-                            <h3><a href="https://github.com/brycekunschick/FishingReport" target="_blank"
-                                    rel="noopener noreferrer">AI Fishing Report</a></h3>
-                            <img src="img/report.png" alt="AI fishing report icon" class="project-icon">
-                        </div>
-                        <p><strong>April 2025</strong></p>
-                        <ul>
-                            <li>Get live weather and water data for an AI-generated fishing report in different spots.
-                            </li>
-                            <li>Data is collected from United States Geological Survey and the National Weather Service
-                                by web scraping with Beautiful Soup.</li>
-                            <li>The collected data is used to create multiple variables which prompt a Local LLM
-                                (gemma3:4b) for a fishing report based on real-time data.</li>
-                        </ul>
-                    </div>
+    <section class="projects-section fade-in-up">
+        <div class="container">
+            <div class="projects-grid">
 
-                    <div class="project-item">
-                        <div class="project-header">
-                            <h3><a href="https://github.com/brycekunschick/FishingData" target="_blank"
-                                    rel="noopener noreferrer">Fishing Database</a></h3>
-                            <img src="img/fishdb.png" alt="Fishing database icon" class="project-icon">
+                <div class="project-card">
+                    <div class="card-top">
+                        <div class="icon-box-large">
+                            <i class="fas fa-chart-line"></i>
                         </div>
-                        <p><strong>August 2023 - Present</strong></p>
-                        <ul>
-                            <li>Store all catches and weather data in a SQL database, as seen in the <a
-                                    href="fishing-dashboard.html">fishing dashboard</a>.</li>
-                            <li>Each fish I catch is logged in Excel with useful information such as Date, Length,
-                                Weight, and Geographic Coordinates.</li>
-                            <li>Using Python code, I get the weather data for each location by making requests to the
-                                National Weather Service API.</li>
-                            <li>Python scripts format the data into CSVs, which are imported into their corresponding
-                                tables in a SQL Server Database.</li>
-                            <li>Using a SQL View, I connect each catch to all of the weather data for the corresponding
-                                location, date, and time.</li>
-                            <li>The SQL View and tables are queried by a Power BI Report, and embedded in this site as
-                                the Fishing Dashboard.</li>
-                        </ul>
+                        <div class="card-meta">
+                            <h3>Options Trading Algorithm</h3>
+                            <span class="date-badge">July 2024 - Present</span>
+                        </div>
                     </div>
+                    <ul class="project-details">
+                        <li>Automated trading based on pricing inefficiencies of options contracts.</li>
+                        <li>Using the Robinhood API, I get live quotes on options contracts.</li>
+                        <li>With data transformations, potential trades based on my hypothesis (SAK) are identified.
+                        </li>
+                        <li>If a trade is identified, a limit order is placed through the API automatically.</li>
+                    </ul>
+                    <a href="https://github.com/brycekunschick/OptionsAlgo" target="_blank" class="project-link">
+                        <i class="fab fa-github"></i> View Repository
+                    </a>
                 </div>
+
+                <div class="project-card">
+                    <div class="card-top">
+                        <div class="icon-box-large">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="card-meta">
+                            <h3>Equities Trading Algorithms</h3>
+                            <span class="date-badge">Sep 2024 - Present</span>
+                        </div>
+                    </div>
+                    <ul class="project-details">
+                        <li>Researched multiple strategies to outperform through low-frequency trading opportunities on
+                            equities.</li>
+                        <li>Backtested strategies to get metrics on returns and max drawdowns.</li>
+                        <li>Developed and deployed algorithms to automate trades.</li>
+                    </ul>
+                    <a href="#" class="project-link disabled">
+                        <i class="fas fa-code"></i> Private Repo
+                    </a>
+                </div>
+
+                <div class="project-card">
+                    <div class="card-top">
+                        <div class="icon-box-large">
+                            <i class="fas fa-microchip"></i>
+                        </div>
+                        <div class="card-meta">
+                            <h3>AI Fishing Report</h3>
+                            <span class="date-badge">April 2025</span>
+                        </div>
+                    </div>
+                    <ul class="project-details">
+                        <li>Get live weather and water data for an AI-generated fishing report in different spots.</li>
+                        <li>Data is collected from USGS and NWS by web scraping with Beautiful Soup.</li>
+                        <li>Collected data prompts a Local LLM (gemma3:4b) for a fishing report based on real-time
+                            conditions.</li>
+                    </ul>
+                    <a href="https://github.com/brycekunschick/FishingReport" target="_blank" class="project-link">
+                        <i class="fab fa-github"></i> View Repository
+                    </a>
+                </div>
+
+                <div class="project-card">
+                    <div class="card-top">
+                        <div class="icon-box-large">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <div class="card-meta">
+                            <h3>Fishing Database</h3>
+                            <span class="date-badge">Aug 2023 - Present</span>
+                        </div>
+                    </div>
+                    <ul class="project-details">
+                        <li>Store all catches and weather data in a SQL database, powering the <a
+                                href="fishing-dashboard.html">Fishing Dashboard</a>.</li>
+                        <li>Python scripts format data into CSVs and import them into SQL Server tables.</li>
+                        <li>SQL Views connect catches to weather data for the corresponding location and time.</li>
+                        <li>Queried by Power BI for visualization and analytics.</li>
+                    </ul>
+                    <a href="https://github.com/brycekunschick/FishingData" target="_blank" class="project-link">
+                        <i class="fab fa-github"></i> View Repository
+                    </a>
+                </div>
+
             </div>
-        </section>
-    </main>
+        </div>
+    </section>
 
     <footer>
-        <div class="container footer-content">
-            <div class="social-icons-footer">
-                <a href="https://www.linkedin.com/in/brycekunschick/" target="_blank" rel="noopener noreferrer"
-                    aria-label="LinkedIn Profile">
-                    <i class="fab fa-linkedin"></i>
-                </a>
-                <a href="https://github.com/brycekunschick" target="_blank" rel="noopener noreferrer"
-                    aria-label="GitHub Profile">
-                    <i class="fab fa-github"></i>
-                </a>
-                <span class="footer-email">kunschickbryce@gmail.com</span>
+        <div class="container footer-container">
+            <div class="footer-left">
+                <p>&copy; 2025 Bryce Kunschick</p>
+                <a href="mailto:kunschickbryce@gmail.com" class="footer-email">kunschickbryce@gmail.com</a>
             </div>
-            <p>&copy; 2025 Bryce Kunschick. All rights reserved.</p>
+            <div class="footer-right">
+                <a href="https://www.linkedin.com/in/brycekunschick/" target="_blank"><i
+                        class="fab fa-linkedin"></i></a>
+                <a href="https://github.com/brycekunschick" target="_blank"><i class="fab fa-github"></i></a>
+            </div>
         </div>
     </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const hamburgerButton = document.querySelector('.hamburger-button');
-            const mobileNav = document.querySelector('.mobile-nav');
+        // Hamburger Menu
+        const hamburger = document.querySelector(".hamburger");
+        const navMenu = document.querySelector(".nav-menu");
 
-            hamburgerButton.addEventListener('click', () => {
-                const isExpanded = hamburgerButton.getAttribute('aria-expanded') === 'true' || false;
-                hamburgerButton.setAttribute('aria-expanded', !isExpanded);
-                mobileNav.classList.toggle('open');
+        hamburger.addEventListener("click", () => {
+            hamburger.classList.toggle("active");
+            navMenu.classList.toggle("active");
+        });
+
+        // Animation
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
             });
         });
+        const hiddenElements = document.querySelectorAll('.fade-in-up');
+        hiddenElements.forEach((el) => observer.observe(el));
     </script>
 </body>
 
