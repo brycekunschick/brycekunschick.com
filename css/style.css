@@ -201,11 +201,20 @@ h1 {
     padding: 0.8rem 1.5rem;
     border-radius: 8px;
     font-weight: 600;
-    text-align: center;
+    /* --- NEW VERTICAL CENTERING PROPERTIES --- */
+    display: flex;
+    /* Enable flexbox for content alignment */
+    align-items: center;
+    /* Vertically center content */
+    justify-content: center;
+    /* Horizontally center content (replaces text-align: center) */
+    /* ------------------------------------------- */
     transition: var(--transition);
     cursor: pointer;
     font-size: 0.95rem;
     border: 2px solid transparent;
+    text-align: center;
+    /* Keep for potential fallback/simple text flow, though flex takes priority */
 }
 
 .btn-primary {
