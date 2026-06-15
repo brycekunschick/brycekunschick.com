@@ -1,0 +1,29 @@
+name: River Forecast
+
+on:
+  schedule:
+    - cron: '0 11 * * *'   # 7 AM EST (noon UTC) every day
+  workflow_dispatch:        # lets you trigger it manually from GitHub too
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run forecast script
+        run: python river_forecast.py --no-browser
+        env:
+          PYTHONUNBUFFERED: "1"
+
+      - name: Commit updated dashboard
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add river_dashboard.html gauge_*.html glofas_climatology.json
+          git diff --staged --quiet || git commit -m "chore: auto-update river forecast $(date -u +%Y-%m-%d)"
+          git push
