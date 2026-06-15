@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ohio River @ Toronto - Fishing Forecast</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0a0f1c; --panel:rgba(255,255,255,.045); --brd:rgba(255,255,255,.09);
+  --txt:#e8eef7; --muted:#90a3bd; --accent:#38bdf8; --accent2:#22d3ee;
+  --fish:#22c55e; --marg:#f59e0b; --skip:#ef4444;
+}
+*{box-sizing:border-box}
+body{margin:0;color:var(--txt);font-family:Inter,system-ui,Segoe UI,Roboto,sans-serif;
+  background:radial-gradient(1200px 700px at 75% -15%, #16294b 0%, #0a0f1c 55%) fixed;
+  -webkit-font-smoothing:antialiased;min-height:100vh}
+.wrap{max-width:1120px;margin:0 auto;padding:30px 20px 70px}
+.title{font-size:clamp(26px,4vw,36px);font-weight:800;letter-spacing:-.02em;margin:0;
+  background:linear-gradient(90deg,#7dd3fc,#22d3ee 55%,#34d399);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--muted);margin:6px 0 0;font-size:14px}
+.hero{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;
+  margin:22px 0 8px;padding:18px 20px;border:1px solid var(--brd);border-radius:18px;
+  background:linear-gradient(180deg,rgba(56,189,248,.10),rgba(255,255,255,.02))}
+.hero .big{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.hero .val{font-size:20px;font-weight:700;margin-top:3px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:24px 0 18px}
+.tab{cursor:pointer;border:1px solid var(--brd);background:var(--panel);color:var(--muted);
+  padding:9px 16px;border-radius:999px;font-size:14px;font-weight:600;transition:.15s}
+.tab:hover{color:var(--txt)}
+.tab.active{color:#06121f;background:linear-gradient(90deg,#7dd3fc,#34d399);border-color:transparent}
+.panel{display:none;animation:fade .25s ease}
+.panel.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.card{border:1px solid var(--brd);background:var(--panel);border-radius:16px;padding:18px 18px;
+  backdrop-filter:blur(6px)}
+.grid{display:grid;gap:14px}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g7{grid-template-columns:repeat(7,1fr)}
+@media(max-width:860px){.g7{grid-template-columns:repeat(3,1fr)}.g3{grid-template-columns:1fr}}
+.fcard{text-align:center;padding:14px 10px}
+.fcard .day{font-weight:700;font-size:15px}
+.fcard .date{color:var(--muted);font-size:12px;margin-bottom:8px}
+.badge{display:inline-block;font-weight:800;font-size:13px;letter-spacing:.03em;
+  padding:6px 12px;border-radius:999px;margin:4px 0}
+.v-FISH{background:rgba(34,197,94,.16);color:#5ee398;border:1px solid rgba(34,197,94,.4)}
+.v-MARGINAL{background:rgba(245,158,11,.16);color:#fbbf52;border:1px solid rgba(245,158,11,.4)}
+.v-SKIP{background:rgba(239,68,68,.16);color:#fb7185;border:1px solid rgba(239,68,68,.45)}
+.conf{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.fmeta{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+.fmeta b{color:var(--txt);font-weight:600}
+.rainpill{display:inline-block;font-size:11px;padding:2px 7px;border-radius:6px;
+  background:rgba(56,189,248,.14);color:#7dd3fc;margin-top:4px}
+.rainpill.hot{background:rgba(245,158,11,.18);color:#fbbf52}
+.gauge{padding:18px}
+.gauge .lbl{font-size:13px;color:var(--muted)}
+.gauge .lbl a.glink{color:inherit;text-decoration:none;border-bottom:1px dashed rgba(255,255,255,.22)}
+.gauge .lbl a.glink:hover{color:var(--accent);border-color:var(--accent)}
+.gauge .num{font-size:30px;font-weight:800;margin:6px 0 2px}
+.gauge .unit{font-size:14px;color:var(--muted);font-weight:500}
+.tag{display:inline-block;font-size:12px;padding:3px 9px;border-radius:999px;margin-right:6px;
+  border:1px solid var(--brd);color:var(--muted)}
+.tag.up{color:#fb7185;border-color:rgba(239,68,68,.4)}
+.tag.dn{color:#5ee398;border-color:rgba(34,197,94,.4)}
+.watch{color:#fbbf52;font-weight:600;font-size:12px;margin-top:8px}
+h2.sec{font-size:16px;font-weight:700;margin:26px 0 12px;color:#cfe0f2}
+.chartbox{position:relative;height:340px}
+.note{color:var(--muted);font-size:13px;line-height:1.65}
+.legend{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:10px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th,table.t td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--brd)}
+table.t th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.bp{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--brd);font-size:14px}
+.bp:last-child{border:0}
+.bp .co{color:var(--muted);font-size:12px}
+.foot{color:var(--muted);font-size:12px;text-align:center;margin-top:34px}
+a{color:var(--accent)}
+.ant{display:inline-flex;align-items:center;gap:10px;font-size:14px}
+.dot{width:10px;height:10px;border-radius:50%}
+.outstrip{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.outchip{border:1px solid var(--brd);background:var(--panel);border-radius:12px;padding:8px 12px;font-size:13px}
+.outchip b{display:block;font-size:12px;color:var(--muted);font-weight:600}
+</style></head>
+<body><div class="wrap">
+  <h1 class="title">Ohio River &middot; Toronto, OH</h1>
+  <p class="sub">7-day fishability forecast &nbsp;|&nbsp; generated <span id="gen"></span></p>
+
+  <div class="hero" id="hero"></div>
+
+  <div class="tabs">
+    <div class="tab active" data-t="forecast">7-Day Forecast</div>
+    <div class="tab" data-t="now">Current Conditions</div>
+    <div class="tab" data-t="rain">Watershed Rain</div>
+    <div class="tab" data-t="how">How It Works</div>
+  </div>
+
+  <div class="panel active" id="p-forecast">
+    <div class="grid g7" id="fcards"></div>
+    <h2 class="sec">Discharge trajectory (m&sup3;/s) &mdash; model median, ensemble range &amp; seasonal normal</h2>
+    <div class="card"><div class="chartbox"><canvas id="dischargeChart"></canvas></div>
+      <div class="legend">
+        <span><i style="background:#38bdf8"></i>Ensemble median</span>
+        <span><i style="background:rgba(56,189,248,.25)"></i>Likely range (p25-p75)</span>
+        <span><i style="background:#fb7185"></i>Worst-case (max)</span>
+        <span><i style="background:#94a3b8"></i>Normal (p50)</span>
+        <span><i style="background:#f59e0b"></i>High threshold (p90)</span>
+      </div></div>
+    <h2 class="sec">Outlook (days 8-11)</h2>
+    <div class="outstrip" id="outlook"></div>
+  </div>
+
+  <div class="panel" id="p-now">
+    <div class="grid g3" id="gauges"></div>
+    <h2 class="sec">Upstream ground saturation</h2>
+    <div class="card" id="antcard"></div>
+    <p class="note" style="margin-top:14px">These gauges are the ground truth right now &mdash; the river&rsquo;s
+      live flow already contains every drop of past rain. Watch the LOCAL creek: it can muddy your bank
+      even when the mainstem reads clean.<br><br><b style="color:var(--txt)">Tip:</b>
+      click a gauge name for its full 3-month history chart + a USGS link.</p>
+  </div>
+
+  <div class="panel" id="p-rain">
+    <h2 class="sec" style="margin-top:6px">Upstream basin rainfall (mm/day, stacked by sub-basin)</h2>
+    <div class="card"><div class="chartbox"><canvas id="rainChart"></canvas></div></div>
+    <div class="grid g3" style="margin-top:16px">
+      <div class="card"><h2 class="sec" style="margin:0 0 10px">Rain watch</h2><div id="rainwatch" class="note"></div></div>
+      <div class="card"><h2 class="sec" style="margin:0 0 10px">Sub-basins sampled</h2><div id="basinlist"></div></div>
+      <div class="card"><h2 class="sec" style="margin:0 0 10px">Travel lag</h2>
+        <p class="note" style="margin:0">Headwater rain takes <b style="color:var(--txt)">~2-5 days</b> to reach
+        Toronto (leading edge ~1-2 days when flows are already high; full peak up to ~a week for big,
+        widespread events). The discharge chart already routes this for you.</p></div>
+    </div>
+  </div>
+
+  <div class="panel" id="p-how">
+    <div class="card"><p class="note">
+      <b style="color:var(--txt)">Watch discharge, not height.</b> The New Cumberland &amp; Pike Island
+      lock-and-dams hold the river&rsquo;s <i>height</i> nearly constant, so stage is useless. They don&rsquo;t
+      mask <i>discharge</i> (flow), which is what tracks high, fast, muddy water.<br><br>
+      <b style="color:var(--txt)">Clarity is inferred, then calibrated.</b> No real-time turbidity sensor exists
+      near Toronto, so the verdict blends flow LEVEL (vs the season&rsquo;s normal) with DIRECTION (mud rides the
+      rising limb; water clears on the way down). Log trips with <code>--log 1..5</code> to tune it to your eyes.<br><br>
+      <b style="color:var(--txt)">Rain is shown, not double-counted.</b> The GloFAS discharge forecast already
+      bakes in forecast rainfall + soil moisture + routing. The rain tab is there so you can <i>see</i> the pulse
+      coming and understand the lag &mdash; it isn&rsquo;t added into the score again.
+    </p></div>
+    <h2 class="sec">How each day is scored</h2>
+    <div class="card"><table class="t">
+      <tr><th>Ingredient</th><th>Rule</th><th>Points</th></tr>
+      <tr><td>Level (flow vs monthly normal)</td><td>&le; median / above normal / high / very high</td><td>0 / +1 / +2 / +3</td></tr>
+      <tr><td>Trend (hysteresis)</td><td>rising hard / rising / clearing</td><td>+2 / +1 / &minus;1</td></tr>
+      <tr><td>Blow-out risk (ensemble)</td><td>p75 reaches &ldquo;high&rdquo;, wide spread, or max &ge; 2.2&times; median</td><td>+1</td></tr>
+      <tr><td colspan="2"><b>Verdict</b></td><td>&le;0 FISH &middot; 1-2 MARGINAL &middot; &ge;3 SKIP</td></tr>
+    </table></div>
+  </div>
+
+  <div style="text-align:center;margin-top:30px">
+    <a href="https://www.wkbn.com/weather-cameras/east-liverpool/" target="_blank" rel="noopener"
+       style="display:inline-block;border:1px solid var(--brd);background:var(--panel);color:var(--muted);
+       padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;text-decoration:none">
+       &#128247; Live Camera</a>
+  </div>
+  <p class="foot">Data: USGS NWIS &middot; GloFAS/ECMWF via Open-Meteo &middot; Open-Meteo precip.
+     Tight lines. &#x1F3A3;</p>
+</div>
+
+<script>
+const DATA = {"generated": "Monday Jun 15, 2026  10:56 PM", "now": [{"label": "Ohio R @ Sewickley (mainstem, ~1-2 day lead)", "role": "lead", "cfs": 16700, "pct": 14.4, "trend": "rising", "pctl": "below normal", "site": "03086000", "page": "gauge_03086000.html", "watch": false}, {"label": "Beaver R @ Beaver Falls (tributary)", "role": "trib", "cfs": 2600, "pct": 81.8, "trend": "RISING HARD", "pctl": "above normal", "site": "03107500", "page": "gauge_03107500.html", "watch": false}, {"label": "Little Beaver Ck @ E.Liverpool (LOCAL mud)", "role": "local", "cfs": 431, "pct": 89.9, "trend": "RISING HARD", "pctl": "above normal", "site": "03109500", "page": "gauge_03109500.html", "watch": true}], "antecedent": {"mm": 30, "word": "WET - rain primes runoff"}, "forecast": [{"date": "2026-06-15", "dayname": "Mon", "q": 674, "level": "below normal", "trend": "steady", "rain": 0.0, "notable": false, "upside": "-", "verdict": "FISH", "conf": "high"}, {"date": "2026-06-16", "dayname": "Tue", "q": 717, "level": "below normal", "trend": "steady", "rain": 0.0, "notable": false, "upside": "-", "verdict": "FISH", "conf": "high"}, {"date": "2026-06-17", "dayname": "Wed", "q": 727, "level": "below normal", "trend": "steady", "rain": 1.0, "notable": false, "upside": "-", "verdict": "FISH", "conf": "high"}, {"date": "2026-06-18", "dayname": "Thu", "q": 718, "level": "below normal", "trend": "steady", "rain": 23.6, "notable": true, "upside": "-", "verdict": "FISH", "conf": "med"}, {"date": "2026-06-19", "dayname": "Fri", "q": 700, "level": "below normal", "trend": "steady", "rain": 2.2, "notable": false, "upside": "-", "verdict": "FISH", "conf": "med"}, {"date": "2026-06-20", "dayname": "Sat", "q": 723, "level": "below normal", "trend": "steady", "rain": 0.0, "notable": false, "upside": "spike possible", "verdict": "MARGINAL", "conf": "low"}, {"date": "2026-06-21", "dayname": "Sun", "q": 798, "level": "below normal", "trend": "rising", "rain": 1.5, "notable": false, "upside": "spike possible", "verdict": "MARGINAL", "conf": "low"}], "outlook": [{"date": "2026-06-22", "dayname": "Mon", "q": 780, "level": "below normal"}, {"date": "2026-06-23", "dayname": "Tue", "q": 837, "level": "below normal"}, {"date": "2026-06-24", "dayname": "Wed", "q": 1039, "level": "above normal"}, {"date": "2026-06-25", "dayname": "Thu", "q": 1389, "level": "above normal"}], "headline": {"best": [{"date": "2026-06-15", "dayname": "Mon", "q": 674, "level": "below normal", "trend": "steady", "rain": 0.0, "notable": false, "upside": "-", "verdict": "FISH", "conf": "high"}, {"date": "2026-06-16", "dayname": "Tue", "q": 717, "level": "below normal", "trend": "steady", "rain": 0.0, "notable": false, "upside": "-", "verdict": "FISH", "conf": "high"}, {"date": "2026-06-17", "dayname": "Wed", "q": 727, "level": "below normal", "trend": "steady", "rain": 1.0, "notable": false, "upside": "-", "verdict": "FISH", "conf": "high"}, {"date": "2026-06-18", "dayname": "Thu", "q": 718, "level": "below normal", "trend": "steady", "rain": 23.6, "notable": true, "upside": "-", "verdict": "FISH", "conf": "med"}, {"date": "2026-06-19", "dayname": "Fri", "q": 700, "level": "below normal", "trend": "steady", "rain": 2.2, "notable": false, "upside": "-", "verdict": "FISH", "conf": "med"}], "avoid": [], "rain_watch": [{"mm": 24, "date": "2026-06-18", "arrive": "Sun 06-21", "wet": true}]}, "discharge": [{"date": "2026-06-08", "median": 527.45, "p25": 526.23, "p75": 529.88, "max": 541.0, "clim_p50": 846, "clim_p90": 2112, "past": true}, {"date": "2026-06-09", "median": 501.34, "p25": 501.34, "p75": 501.34, "max": 501.34, "clim_p50": 846, "clim_p90": 2112, "past": true}, {"date": "2026-06-10", "median": 533.56, "p25": 532.33, "p75": 536.03, "max": 542.25, "clim_p50": 846, "clim_p90": 2112, "past": true}, {"date": "2026-06-11", "median": 505.99, "p25": 502.5, "p75": 510.68, "max": 593.29, "clim_p50": 846, "clim_p90": 2112, "past": true}, {"date": "2026-06-12", "median": 513.04, "p25": 508.04, "p75": 526.53, "max": 554.9, "clim_p50": 846, "clim_p90": 2112, "past": true}, {"date": "2026-06-13", "median": 565.89, "p25": 557.47, "p75": 578.76, "max": 629.96, "clim_p50": 846, "clim_p90": 2112, "past": true}, {"date": "2026-06-14", "median": 643.17, "p25": 643.17, "p75": 644.65, "max": 644.65, "clim_p50": 846, "clim_p90": 2112, "past": true}, {"date": "2026-06-15", "median": 674.31, "p25": 665.81, "p75": 687.65, "max": 736.9, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-16", "median": 716.79, "p25": 715.14, "p75": 718.45, "max": 725.11, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-17", "median": 726.78, "p25": 723.44, "p75": 731.82, "max": 750.62, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-18", "median": 717.62, "p25": 710.21, "p75": 726.78, "max": 745.45, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-19", "median": 700.46, "p25": 683.7, "p75": 728.46, "max": 1296.18, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-20", "median": 723.44, "p25": 676.26, "p75": 810.43, "max": 2587.21, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-21", "median": 797.91, "p25": 679.38, "p75": 967.28, "max": 4644.15, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-22", "median": 779.73, "p25": 670.05, "p75": 1134.07, "max": 4334.11, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-23", "median": 837.49, "p25": 653.26, "p75": 1595.86, "max": 3907.41, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-24", "median": 1039.06, "p25": 664.66, "p75": 2090.74, "max": 4496.8, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-25", "median": 1389.32, "p25": 762.09, "p75": 2388.19, "max": 4953.5, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-26", "median": 1323.34, "p25": 801.08, "p75": 1997.05, "max": 4148.54, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-27", "median": 1211.01, "p25": 778.47, "p75": 1735.81, "max": 3139.51, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-28", "median": 1104.36, "p25": 717.25, "p75": 1451.95, "max": 2611.16, "clim_p50": 846, "clim_p90": 2112, "past": false}], "today_index": 7, "rain": [{"date": "2026-06-10", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 0.0, "Mon headwaters": 4.4, "Beaver basin": 26.4}, "basin_avg": 7.7, "past": true}, {"date": "2026-06-11", "points": {"Pittsburgh/confluence": 1.8, "Allegheny headwaters": 1.8, "Mon headwaters": 0.7, "Beaver basin": 0.4}, "basin_avg": 1.2, "past": true}, {"date": "2026-06-12", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 0.0, "Mon headwaters": 0.0, "Beaver basin": 0.0}, "basin_avg": 0.0, "past": true}, {"date": "2026-06-13", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 0.0, "Mon headwaters": 0.0, "Beaver basin": 0.0}, "basin_avg": 0.0, "past": true}, {"date": "2026-06-14", "points": {"Pittsburgh/confluence": 0.7, "Allegheny headwaters": 5.4, "Mon headwaters": 50.0, "Beaver basin": 29.2}, "basin_avg": 21.3, "past": true}, {"date": "2026-06-15", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 0.0, "Mon headwaters": 0.0, "Beaver basin": 0.0}, "basin_avg": 0.0, "past": false}, {"date": "2026-06-16", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 0.0, "Mon headwaters": 0.0, "Beaver basin": 0.0}, "basin_avg": 0.0, "past": false}, {"date": "2026-06-17", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 3.0, "Mon headwaters": 0.0, "Beaver basin": 1.0}, "basin_avg": 1.0, "past": false}, {"date": "2026-06-18", "points": {"Pittsburgh/confluence": 32.9, "Allegheny headwaters": 19.0, "Mon headwaters": 18.1, "Beaver basin": 24.4}, "basin_avg": 23.6, "past": false}, {"date": "2026-06-19", "points": {"Pittsburgh/confluence": 2.0, "Allegheny headwaters": 2.1, "Mon headwaters": 1.5, "Beaver basin": 3.1}, "basin_avg": 2.2, "past": false}, {"date": "2026-06-20", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 0.0, "Mon headwaters": 0.0, "Beaver basin": 0.0}, "basin_avg": 0.0, "past": false}, {"date": "2026-06-21", "points": {"Pittsburgh/confluence": 0.3, "Allegheny headwaters": 4.2, "Mon headwaters": 0.0, "Beaver basin": 1.5}, "basin_avg": 1.5, "past": false}, {"date": "2026-06-22", "points": {"Pittsburgh/confluence": 3.9, "Allegheny headwaters": 0.0, "Mon headwaters": 14.7, "Beaver basin": 6.9}, "basin_avg": 6.4, "past": false}, {"date": "2026-06-23", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 0.0, "Mon headwaters": 0.3, "Beaver basin": 0.0}, "basin_avg": 0.1, "past": false}, {"date": "2026-06-24", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 0.0, "Mon headwaters": 1.8, "Beaver basin": 0.0}, "basin_avg": 0.5, "past": false}, {"date": "2026-06-25", "points": {"Pittsburgh/confluence": 4.2, "Allegheny headwaters": 2.1, "Mon headwaters": 0.9, "Beaver basin": 3.6}, "basin_avg": 2.7, "past": false}, {"date": "2026-06-26", "points": {"Pittsburgh/confluence": 1.2, "Allegheny headwaters": 1.8, "Mon headwaters": 3.0, "Beaver basin": 0.9}, "basin_avg": 1.7, "past": false}, {"date": "2026-06-27", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 0.0, "Mon headwaters": 0.0, "Beaver basin": 0.0}, "basin_avg": 0.0, "past": false}, {"date": "2026-06-28", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 0.3, "Mon headwaters": 0.0, "Beaver basin": 0.0}, "basin_avg": 0.1, "past": false}], "basin_points": [{"name": "Pittsburgh/confluence", "lat": 40.445, "lon": -80.006}, {"name": "Allegheny headwaters", "lat": 41.858, "lon": -79.162}, {"name": "Mon headwaters", "lat": 39.641, "lon": -79.957}, {"name": "Beaver basin", "lat": 40.987, "lon": -80.34}], "notable_mm": 15.0};
+document.getElementById('gen').textContent = DATA.generated;
+
+/* ---- hero ---- */
+(function(){
+  const h = DATA.headline;
+  const best = h.best.map(f=>f.dayname+' '+f.date.slice(5)).join(', ') || 'none clearly clean this week';
+  const avoid = h.avoid.map(f=>f.dayname+' '+f.date.slice(5)).join(', ') || 'none';
+  let rw = '';
+  if(h.rain_watch.length){const r=h.rain_watch[0];
+    rw = `<div><div class="big">Rain watch</div><div class="val">${r.mm} mm &rarr; pulse ~${r.arrive}</div></div>`;}
+  document.getElementById('hero').innerHTML =
+    `<div><div class="big">Best window</div><div class="val" style="color:#5ee398">${best}</div></div>`+
+    `<div><div class="big">Avoid</div><div class="val" style="color:#fb7185">${avoid}</div></div>`+ rw;
+})();
+
+/* ---- forecast cards ---- */
+document.getElementById('fcards').innerHTML = DATA.forecast.map(f=>{
+  const rp = f.rain>0 ? `<div class="rainpill ${f.notable?'hot':''}">&#127783; ${f.rain} mm</div>`:'';
+  const up = (f.upside && f.upside!=='-') ? `<div class="fmeta">if it rains: <b>${f.upside}</b></div>`:'';
+  return `<div class="card fcard">
+    <div class="day">${f.dayname}</div><div class="date">${f.date.slice(5)}</div>
+    <div class="badge v-${f.verdict}">${f.verdict}</div>
+    <div class="conf">${f.conf} conf</div>
+    <div class="fmeta"><b>${f.q}</b> m&sup3;/s<br>${f.level} &middot; ${f.trend}</div>
+    ${rp}${up}</div>`;
+}).join('');
+
+/* ---- outlook ---- */
+document.getElementById('outlook').innerHTML = DATA.outlook.map(o=>
+  `<div class="outchip"><b>${o.dayname} ${o.date.slice(5)}</b>${o.q} m&sup3;/s &middot; ${o.level}</div>`
+).join('') || '<span class="note">No extended outlook available.</span>';
+
+/* ---- gauges ---- */
+document.getElementById('gauges').innerHTML = DATA.now.map(g=>{
+  const dir = g.pct>5?'up':(g.pct<-5?'dn':'');
+  const arrow = g.pct>5?'&#9650;':(g.pct<-5?'&#9660;':'&#9644;');
+  return `<div class="card gauge">
+    <div class="lbl"><a class="glink" href="${g.page}">${g.label} <span style="opacity:.55">&#8599;</span></a></div>
+    <div class="num">${g.cfs.toLocaleString()} <span class="unit">cfs</span></div>
+    <span class="tag ${dir}">${arrow} ${g.trend} (${g.pct>0?'+':''}${g.pct}%/24h)</span>
+    <span class="tag">${g.pctl||'—'}</span>
+    ${g.watch?'<div class="watch">&#9888; local creek up &mdash; nearshore mud risk</div>':''}</div>`;
+}).join('');
+
+/* ---- antecedent ---- */
+(function(){
+  const a=DATA.antecedent; const col = a.mm>25?'#fb7185':(a.mm>8?'#fbbf52':'#5ee398');
+  document.getElementById('antcard').innerHTML =
+    `<div class="ant"><span class="dot" style="background:${col}"></span>
+     <span>Last 5 days of upstream basin rain: <b>${a.mm} mm</b> &rarr; <b style="color:${col}">${a.word}</b></span></div>
+     <p class="note" style="margin:10px 0 0">Wet ground makes the next rain run off faster and dirtier.</p>`;
+})();
+
+/* ---- rain watch + basins ---- */
+document.getElementById('rainwatch').innerHTML = DATA.headline.rain_watch.length
+  ? DATA.headline.rain_watch.map(r=>`&#127783; <b style="color:var(--txt)">${r.mm} mm</b> basin rain ~${r.date.slice(5)}
+     &rarr; expect a discharge pulse at Toronto <b style="color:var(--txt)">~${r.arrive}</b>
+     ${r.wet?'<span style="color:#fb7185">(worse &mdash; ground already wet)</span>':''}`).join('<br><br>')
+  : 'No notable rain (&ge;'+DATA.notable_mm+' mm) in the upstream basin this week.';
+document.getElementById('basinlist').innerHTML = DATA.basin_points.map(b=>
+  `<div class="bp"><span>${b.name}</span><span class="co">${b.lat}, ${b.lon}</span></div>`).join('');
+
+/* ---- charts ---- */
+const gridc='rgba(255,255,255,.06)', txtc='#90a3bd';
+Chart.defaults.color=txtc; Chart.defaults.font.family='Inter';
+
+const todayLine={id:'todayLine',afterDraw(c){
+  const idx=c.options.plugins.todayLine.idx; if(idx==null)return;
+  const x=c.scales.x.getPixelForValue(idx); const {top,bottom}=c.chartArea;
+  const cx=c.ctx; cx.save(); cx.strokeStyle='rgba(255,255,255,.35)'; cx.setLineDash([4,4]); cx.lineWidth=1;
+  cx.beginPath(); cx.moveTo(x,top); cx.lineTo(x,bottom); cx.stroke();
+  cx.setLineDash([]); cx.fillStyle='rgba(255,255,255,.6)'; cx.font='11px Inter'; cx.fillText('today',x+5,top+13);
+  cx.restore();
+}};
+
+const d=DATA.discharge, dl=d.map(r=>r.date.slice(5));
+new Chart(document.getElementById('dischargeChart'),{
+  type:'line',
+  data:{labels:dl,datasets:[
+    {label:'p25',data:d.map(r=>r.p25),borderColor:'transparent',pointRadius:0,fill:false},
+    {label:'p25-p75 range',data:d.map(r=>r.p75),borderColor:'transparent',pointRadius:0,
+      backgroundColor:'rgba(56,189,248,.18)',fill:'-1'},
+    {label:'Worst-case (max)',data:d.map(r=>r.max),borderColor:'#fb7185',borderWidth:1,
+      borderDash:[3,3],pointRadius:0,fill:false},
+    {label:'Median',data:d.map(r=>r.median),borderColor:'#38bdf8',borderWidth:2.5,
+      pointRadius:0,tension:.3,fill:false},
+    {label:'Normal (p50)',data:d.map(r=>r.clim_p50),borderColor:'#94a3b8',borderWidth:1,
+      borderDash:[6,4],pointRadius:0,fill:false},
+    {label:'High (p90)',data:d.map(r=>r.clim_p90),borderColor:'#f59e0b',borderWidth:1,
+      borderDash:[6,4],pointRadius:0,fill:false},
+  ]},
+  options:{maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},todayLine:{idx:DATA.today_index},
+      tooltip:{callbacks:{label:c=>c.dataset.label+': '+Math.round(c.parsed.y)+' m³/s'}}},
+    scales:{x:{grid:{color:gridc}},y:{grid:{color:gridc},title:{display:true,text:'m³/s'}}}},
+  plugins:[todayLine]
+});
+
+const r=DATA.rain, rl=r.map(x=>x.date.slice(5));
+const bp=DATA.basin_points.map(b=>b.name);
+const cols=['#38bdf8','#34d399','#a78bfa','#f59e0b'];
+new Chart(document.getElementById('rainChart'),{
+  type:'bar',
+  data:{labels:rl,datasets:bp.map((n,i)=>({label:n,
+    data:r.map(x=>x.points[n]),backgroundColor:cols[i%cols.length],stack:'s',
+    borderRadius:3}))},
+  options:{maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{boxWidth:12}},todayLine:{idx:DATA.today_index},
+      tooltip:{mode:'index'}},
+    scales:{x:{stacked:true,grid:{color:gridc}},
+      y:{stacked:true,grid:{color:gridc},title:{display:true,text:'mm / day'}}}},
+  plugins:[todayLine]
+});
+
+/* ---- tabs ---- */
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById('p-'+t.dataset.t).classList.add('active');
+});
+</script>
+</body></html>
