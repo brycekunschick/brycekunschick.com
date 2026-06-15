@@ -2,12 +2,13 @@ name: River Forecast
 
 on:
   schedule:
-    - cron: '0 11 * * *'   # 7 AM EST (noon UTC) every day
-  workflow_dispatch:        # lets you trigger it manually from GitHub too
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
 
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 1
     steps:
       - uses: actions/checkout@v4
 
