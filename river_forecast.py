@@ -381,6 +381,8 @@ def build_payload():
                                      for k in range(len(BASIN_POINTS))},
                           "basin_avg": round(basin_avg[dte], 1),
                           "past": dte < today.isoformat()})
+    rain_today_index = next((i for i, dte in enumerate(rain_times)
+                             if dte == today.isoformat()), None)
 
     return {
         "generated": dt.datetime.now(dt.timezone.utc).astimezone(dt.timezone(dt.timedelta(hours=-4))).strftime("%A %b %d, %Y  %I:%M %p ET"),
@@ -389,7 +391,7 @@ def build_payload():
         "forecast": fcast, "outlook": outlook,
         "headline": {"best": best, "avoid": avoid, "rain_watch": rain_watch},
         "discharge": disch, "today_index": today_index,
-        "rain": rain_rows,
+        "rain": rain_rows, "rain_today_index": rain_today_index,
         "basin_points": [{"name": n, "lat": la, "lon": lo} for la, lo, n in BASIN_POINTS],
         "notable_mm": RAIN_NOTABLE_MM,
     }
@@ -435,9 +437,9 @@ body{margin:0;color:var(--txt);font-family:Inter,system-ui,Segoe UI,Roboto,sans-
   backdrop-filter:blur(6px)}
 .grid{display:grid;gap:14px}
 .g3{grid-template-columns:repeat(3,1fr)}
-.g7{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:8px;scrollbar-width:none}
+.g7{display:flex;gap:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px;scrollbar-width:none;scroll-behavior:smooth}
 .g7::-webkit-scrollbar{display:none}
-.g7 .card{flex:0 0 calc(50% - 6px);scroll-snap-align:start;min-width:0}
+.g7 .card{flex:0 0 calc(40% - 6px);min-width:0}
 @media(min-width:860px){.g7 .card{flex:0 0 calc(14.28% - 11px)}}
 @media(max-width:860px){.g3{grid-template-columns:1fr}}
 .fcard{text-align:center;padding:14px 10px}
@@ -487,7 +489,7 @@ a{color:var(--accent)}
 </style></head>
 <body><div class="wrap">
   <h1 class="title">Ohio River &middot; Toronto, OH</h1>
-  <p class="sub">7-day forecast &nbsp;|&nbsp; generated <span id="gen"></span></p>
+  <p class="sub">7-day forecast &nbsp;|&nbsp; <span id="gen"></span></p>
 
   <div class="hero" id="hero"></div>
 
@@ -678,7 +680,7 @@ new Chart(document.getElementById('rainChart'),{
     data:r.map(x=>x.points[n]),backgroundColor:cols[i%cols.length],stack:'s',
     borderRadius:3}))},
   options:{maintainAspectRatio:false,
-    plugins:{legend:{position:'bottom',labels:{boxWidth:12}},todayLine:{idx:DATA.today_index},
+    plugins:{legend:{position:'bottom',labels:{boxWidth:12}},todayLine:{idx:DATA.rain_today_index},
       tooltip:{mode:'index'}},
     scales:{x:{stacked:true,grid:{color:gridc}},
       y:{stacked:true,grid:{color:gridc},title:{display:true,text:'mm / day'}}}},
