@@ -638,7 +638,8 @@ Chart.defaults.color=txtc; Chart.defaults.font.family='Inter';
 
 const todayLine={id:'todayLine',afterDraw(c){
   const idx=c.options.plugins.todayLine.idx; if(idx==null)return;
-  const x=c.scales.x.getPixelForValue(idx); const {top,bottom}=c.chartArea;
+  const labels=c.data.labels; if(!labels||idx>=labels.length)return;
+  const x=c.scales.x.getPixelForValue(labels[idx]); const {top,bottom}=c.chartArea;
   const cx=c.ctx; cx.save(); cx.strokeStyle='rgba(255,255,255,.35)'; cx.setLineDash([4,4]); cx.lineWidth=1;
   cx.beginPath(); cx.moveTo(x,top); cx.lineTo(x,bottom); cx.stroke();
   cx.setLineDash([]); cx.fillStyle='rgba(255,255,255,.6)'; cx.font='11px Inter'; cx.fillText('today',x+5,top+13);
@@ -795,8 +796,16 @@ if(!H.length){
   grad.addColorStop(0,'rgba(56,189,248,.35)');grad.addColorStop(1,'rgba(56,189,248,0)');
   Chart.defaults.color='#90a3bd';Chart.defaults.font.family='Inter';
   const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const wk=[]; let dc=0;                       // index of every 7th midnight = weekly ticks
-  H.forEach((p,i)=>{if(p.t.slice(11)==='00:00'){if(dc%7===0)wk.push(i);dc++;}});
+  const isMobile=window.innerWidth<600;
+  // Mobile: first of each month only. Desktop: every 7th midnight.
+  const ticks=[]; let dc=0;
+  H.forEach((p,i)=>{
+    if(p.t.slice(11)==='00:00'){
+      if(isMobile){ if(p.t.slice(8,10)==='01') ticks.push(i); }
+      else { if(dc%7===0) ticks.push(i); }
+      dc++;
+    }
+  });
   new Chart(ctx,{type:'line',
     data:{labels:H.map(p=>p.t),datasets:[{label:'Discharge (cfs)',
       data:qs,borderColor:'#38bdf8',borderWidth:2,pointRadius:0,tension:.25,fill:true,backgroundColor:grad}]},
@@ -804,10 +813,10 @@ if(!H.length){
       plugins:{legend:{display:false},
         tooltip:{callbacks:{title:i=>H[i[0].dataIndex].t,label:c=>c.parsed.y.toLocaleString()+' cfs'}}},
       scales:{x:{grid:{color:'rgba(255,255,255,.06)'},
-        afterBuildTicks:a=>{if(wk.length)a.ticks=wk.map(i=>({value:i}));},
+        afterBuildTicks:a=>{if(ticks.length)a.ticks=ticks.map(i=>({value:i}));},
         ticks:{autoSkip:false,maxRotation:0,minRotation:0,
           callback:v=>{const s=(typeof v==='number')?(H[v]&&H[v].t):v;
-            return s?MON[+String(s).slice(5,7)-1]+' '+String(s).slice(8,10):'';}}},
+            return s?MON[+String(s).slice(5,7)-1]+(isMobile?'':' '+String(s).slice(8,10)):'';}}},
         y:{grid:{color:'rgba(255,255,255,.06)'},title:{display:true,text:'cfs'}}}}});
 }
 </script></body></html>
