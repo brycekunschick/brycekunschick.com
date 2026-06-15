@@ -383,7 +383,7 @@ def build_payload():
                           "past": dte < today.isoformat()})
 
     return {
-        "generated": dt.datetime.now().strftime("%A %b %d, %Y  %I:%M %p"),
+        "generated": dt.datetime.now(dt.timezone.utc).astimezone(dt.timezone(dt.timedelta(hours=-4))).strftime("%A %b %d, %Y  %I:%M %p ET"),
         "now": now_cards,
         "antecedent": {"mm": round(ant), "word": ant_word},
         "forecast": fcast, "outlook": outlook,
@@ -435,11 +435,15 @@ body{margin:0;color:var(--txt);font-family:Inter,system-ui,Segoe UI,Roboto,sans-
   backdrop-filter:blur(6px)}
 .grid{display:grid;gap:14px}
 .g3{grid-template-columns:repeat(3,1fr)}
-.g7{grid-template-columns:repeat(7,1fr)}
-@media(max-width:860px){.g7{grid-template-columns:repeat(3,1fr)}.g3{grid-template-columns:1fr}}
+.g7{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:8px;scrollbar-width:none}
+.g7::-webkit-scrollbar{display:none}
+.g7 .card{flex:0 0 calc(50% - 6px);scroll-snap-align:start;min-width:0}
+@media(min-width:860px){.g7 .card{flex:0 0 calc(14.28% - 11px)}}
+@media(max-width:860px){.g3{grid-template-columns:1fr}}
 .fcard{text-align:center;padding:14px 10px}
 .fcard .day{font-weight:700;font-size:15px}
 .fcard .date{color:var(--muted);font-size:12px;margin-bottom:8px}
+.chartbox canvas{-webkit-user-select:none;user-select:none;touch-action:pan-y}
 .badge{display:inline-block;font-weight:800;font-size:13px;letter-spacing:.03em;
   padding:6px 12px;border-radius:999px;margin:4px 0}
 .v-FISH{background:rgba(34,197,94,.16);color:#5ee398;border:1px solid rgba(34,197,94,.4)}
@@ -483,7 +487,7 @@ a{color:var(--accent)}
 </style></head>
 <body><div class="wrap">
   <h1 class="title">Ohio River &middot; Toronto, OH</h1>
-  <p class="sub">7-day fishability forecast &nbsp;|&nbsp; generated <span id="gen"></span></p>
+  <p class="sub">7-day forecast &nbsp;|&nbsp; generated <span id="gen"></span></p>
 
   <div class="hero" id="hero"></div>
 
@@ -495,7 +499,7 @@ a{color:var(--accent)}
   </div>
 
   <div class="panel active" id="p-forecast">
-    <div class="grid g7" id="fcards"></div>
+    <div class="g7" id="fcards"></div>
     <h2 class="sec">Discharge trajectory (m&sup3;/s) &mdash; model median, ensemble range &amp; seasonal normal</h2>
     <div class="card"><div class="chartbox"><canvas id="dischargeChart"></canvas></div>
       <div class="legend">
@@ -577,7 +581,7 @@ document.getElementById('gen').textContent = DATA.generated;
   if(h.rain_watch.length){const r=h.rain_watch[0];
     rw = `<div><div class="big">Rain watch</div><div class="val">${r.mm} mm &rarr; pulse ~${r.arrive}</div></div>`;}
   document.getElementById('hero').innerHTML =
-    `<div><div class="big">Best window</div><div class="val" style="color:#5ee398">${best}</div></div>`+
+    `<div><div class="big">Preferable Conditions</div><div class="val" style="color:#5ee398">${best}</div></div>`+
     `<div><div class="big">Avoid</div><div class="val" style="color:#fb7185">${avoid}</div></div>`+ rw;
 })();
 
