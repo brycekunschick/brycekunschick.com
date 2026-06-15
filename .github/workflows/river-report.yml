@@ -24,6 +24,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add river_dashboard.html gauge_*.html glofas_climatology.json
+          git add river.html gauge_*.html glofas_climatology.json
           git diff --staged --quiet || git commit -m "chore: auto-update river forecast $(date -u +%Y-%m-%d)"
           git push
