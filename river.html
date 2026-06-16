@@ -219,30 +219,22 @@
     /* badges */
     .badge {
       display: inline-block;
-      font-weight: 800;
-      font-size: 13px;
-      letter-spacing: .03em;
-      padding: 6px 12px;
+      width: 44px;
+      height: 16px;
       border-radius: 999px;
-      margin: 4px 0;
+      margin: 6px 0;
     }
 
     .v-FISH {
-      background: rgba(34, 197, 94, .16);
-      color: #5ee398;
-      border: 1px solid rgba(34, 197, 94, .4);
+      background: #5ee398;
     }
 
     .v-MARGINAL {
-      background: rgba(245, 158, 11, .16);
-      color: #fbbf52;
-      border: 1px solid rgba(245, 158, 11, .4);
+      background: #fbbf52;
     }
 
     .v-SKIP {
-      background: rgba(239, 68, 68, .16);
-      color: #fb7185;
-      border: 1px solid rgba(239, 68, 68, .45);
+      background: #fb7185;
     }
 
     .conf {
@@ -521,6 +513,37 @@
       padding: 60px 0;
     }
 
+    /* fixed refresh button */
+    #refresh-btn {
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 50;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid var(--brd);
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 19px;
+      line-height: 1;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: .15s;
+    }
+
+    #refresh-btn:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    #refresh-btn:active {
+      transform: rotate(180deg);
+    }
+
     /* loading overlay */
     #loader {
       position: fixed;
@@ -608,12 +631,13 @@
     </div>
   </div>
 
+  <!-- fixed refresh button (top-right of screen) -->
+  <button id="refresh-btn" title="Refresh" aria-label="Refresh">↺</button>
+
   <!-- ===== DASHBOARD ===== -->
   <div class="wrap" id="app" style="display:none">
     <h1 class="title">Ohio River &middot; Toronto, OH</h1>
-    <p class="sub">Live 7-day forecast &nbsp;|&nbsp; <span id="gen"></span> &nbsp;|&nbsp;
-      <a href="#" id="refresh-link" style="color:var(--muted);font-size:13px">↺ refresh</a>
-    </p>
+    <p class="sub">7-day forecast &nbsp;|&nbsp; <span id="gen"></span></p>
 
     <div class="hero" id="hero"></div>
 
@@ -643,9 +667,7 @@
 
     <div class="panel" id="p-now">
       <div class="grid g3" id="gauges"></div>
-      <h2 class="sec">Upstream ground saturation</h2>
-      <div class="card" id="antcard"></div>
-      <p class="note" style="margin-top:14px">
+      <p class="note" style="margin-top:18px">
         These gauges are the ground truth right now — the river's live flow already contains
         every drop of past rain. Watch the LOCAL creek: it can muddy your bank even when the
         mainstem reads clean.<br><br>
@@ -655,7 +677,7 @@
     </div>
 
     <div class="panel" id="p-rain">
-      <h2 class="sec" style="margin-top:6px">Upstream basin rainfall (mm/day, stacked by sub-basin)</h2>
+      <h2 class="sec" style="margin-top:6px">Upstream basin rainfall (in/day, stacked by sub-basin)</h2>
       <div class="card">
         <div class="chartbox"><canvas id="rainChart"></canvas></div>
       </div>
@@ -719,7 +741,7 @@
           </tr>
           <tr>
             <td colspan="2"><b>Verdict</b></td>
-            <td>≤0 FISH · 1–2 MARGINAL · ≥3 SKIP</td>
+            <td>≤0 OK · 1–2 MARGINAL · ≥3 BAD</td>
           </tr>
         </table>
       </div>
@@ -793,7 +815,9 @@
       return r.json();
     }
 
-    function isoDate(d) { return d.toISOString().slice(0, 10); }
+    // Local calendar date (NOT UTC). toISOString() would roll to the next day
+    // in the evening for non-UTC timezones, pushing the "today" marker forward.
+    function isoDate(d) { return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
 
     function today() { return new Date(); }
 
@@ -806,6 +830,11 @@
     }
 
     function pad2(n) { return String(n).padStart(2, '0'); }
+
+    // rainfall is computed in mm internally; displayed in inches
+    const MM_PER_IN = 25.4;
+    function mmToIn(mm) { return mm / MM_PER_IN; }
+    function inStr(mm, dp = 2) { return mmToIn(mm).toFixed(dp); }
 
     // ─── 1. GLOFAS CLIMATOLOGY ─────────────────────────────────────────────────
     function loadCachedClim() {
@@ -1021,7 +1050,7 @@
       return 'steady';
     }
 
-    function classify(med, mc, pctChange, p25, p75, mx, horizon) {
+    function classify(med, mc, pctChange, p25, p75, mx, horizon, wet) {
       const [levelWord, level] = bandFor(med, mc);
       let score = level;
       let trendW;
@@ -1045,6 +1074,8 @@
       const blowout = (med && mx) ? mx / med : 1;
       const rainRisk = upLevel >= 2 || spread >= 0.5 || blowout >= 2.2;
       if (rainRisk) score += 1;
+      // minor factor: wet antecedent ground makes an incoming pulse dirtier (not surfaced in UI)
+      if (rainRisk && wet) score += 1;
       score = Math.max(0, score);
       const verdict = score <= 0 ? 'FISH' : (score <= 2 ? 'MARGINAL' : 'SKIP');
       let conf;
@@ -1066,7 +1097,7 @@
       for (const [d, v] of Object.entries(basinAvg)) {
         if (d >= ant5Start && d < todayStr) ant += v;
       }
-      const antWord = ant > 25 ? 'WET - rain primes runoff' : (ant > 8 ? 'normal' : 'dry');
+      const groundWet = ant > 25;   // minor scoring factor only; never shown in the UI
 
       // now cards
       const nowCards = [];
@@ -1096,7 +1127,7 @@
         const mc = months[parseInt(d.slice(5, 7))];
         const prev = byDate[isoDate(addDays(today(), h - 1))];
         const pctChange = (prev && prev.median) ? (r.median - prev.median) / prev.median * 100 : null;
-        const { verdict, conf, levelWord, trendW, upside } = classify(r.median, mc, pctChange, r.p25, r.p75, r.max, h);
+        const { verdict, conf, levelWord, trendW, upside } = classify(r.median, mc, pctChange, r.p25, r.p75, r.max, h, groundWet);
         const rmm = basinAvg[d] ?? 0;
         fcast.push({
           date: d, dayname: dayName(d),
@@ -1126,7 +1157,6 @@
           rainWatch.push({
             mm: Math.round(v), date: d,
             arrive: arrive.toLocaleDateString('en-US', { weekday: 'short', month: '2-digit', day: '2-digit' }),
-            wet: ant > 25,
           });
         }
       }
@@ -1160,7 +1190,6 @@
       return {
         generated,
         now: nowCards,
-        antecedent: { mm: Math.round(ant), word: antWord },
         forecast: fcast, outlook,
         headline: { best, avoid, rainWatch },
         discharge, todayIndex,
@@ -1259,7 +1288,7 @@
           labels: rl,
           datasets: bpNames.map((n, i) => ({
             label: n,
-            data: r.map(x => x.points[n]),
+            data: r.map(x => mmToIn(x.points[n])),
             backgroundColor: cols[i % cols.length],
             stack: 's', borderRadius: 3,
           })),
@@ -1269,11 +1298,11 @@
           plugins: {
             legend: { position: 'bottom', labels: { boxWidth: 12 } },
             todayLine: { idx: payload.rainTodayIndex },
-            tooltip: { mode: 'index' },
+            tooltip: { mode: 'index', callbacks: { label: c => c.dataset.label + ': ' + c.parsed.y.toFixed(2) + ' in' } },
           },
           scales: {
             x: { stacked: true, grid: { color: gridc } },
-            y: { stacked: true, grid: { color: gridc }, title: { display: true, text: 'mm / day' } },
+            y: { stacked: true, grid: { color: gridc }, title: { display: true, text: 'in / day' } },
           },
         },
         plugins: [todayLinePlugin],
@@ -1291,19 +1320,20 @@
       let rw = '';
       if (h.rainWatch.length) {
         const rw0 = h.rainWatch[0];
-        rw = `<div><div class="big">Rain watch</div><div class="val">${rw0.mm} mm → pulse ~${rw0.arrive}</div></div>`;
+        rw = `<div><div class="big">Rain watch</div><div class="val">${inStr(rw0.mm)} in → pulse ~${rw0.arrive}</div></div>`;
       }
       document.getElementById('hero').innerHTML =
-        `<div><div class="big">Preferable Conditions</div><div class="val" style="color:#5ee398">${best}</div></div>` +
+        `<div><div class="big">Conditions OK</div><div class="val" style="color:#5ee398">${best}</div></div>` +
         `<div><div class="big">Avoid</div><div class="val" style="color:#fb7185">${avoid}</div></div>` + rw;
 
       // forecast cards
+      const VLABEL = { FISH: 'OK', MARGINAL: 'MARGINAL', SKIP: 'BAD' };
       document.getElementById('fcards').innerHTML = payload.forecast.map(f => {
-        const rp = f.rain > 0 ? `<div class="rainpill ${f.notable ? 'hot' : ''}">🌧 ${f.rain} mm</div>` : '';
-        const up = (f.upside && f.upside !== '-') ? `<div class="fmeta">if it rains: <b>${f.upside}</b></div>` : '';
+        const rp = f.rain > 0 ? `<div class="rainpill ${f.notable ? 'hot' : ''}">🌧 ${inStr(f.rain)} in</div>` : '';
+        const up = (f.upside && f.upside !== '-') ? `<div class="fmeta"><b>${f.upside}</b></div>` : '';
         return `<div class="card fcard">
       <div class="day">${f.dayname}</div><div class="date">${f.date.slice(5)}</div>
-      <div class="badge v-${f.verdict}">${f.verdict}</div>
+      <div class="badge v-${f.verdict}" title="${VLABEL[f.verdict] || ''}"></div>
       <div class="conf">${f.conf} conf</div>
       <div class="fmeta"><b>${f.q}</b> m³/s<br>${f.level} · ${f.trend}</div>
       ${rp}${up}</div>`;
@@ -1323,26 +1353,17 @@
       <div class="num">${g.cfs.toLocaleString()} <span class="unit">cfs</span></div>
       <span class="tag ${dir}">${arrow} ${g.trend} (${g.pct > 0 ? '+' : ''}${g.pct}%/24h)</span>
       <span class="tag">${g.pctl || '—'}</span>
-      ${g.watch ? '<div class="watch">⚠ local creek up — nearshore mud risk</div>' : ''}
+      ${g.watch ? '<div class="watch">⚠ local creek up</div>' : ''}
     </div>`;
       }).join('');
-
-      // antecedent
-      const a = payload.antecedent;
-      const col = a.mm > 25 ? '#fb7185' : (a.mm > 8 ? '#fbbf52' : '#5ee398');
-      document.getElementById('antcard').innerHTML =
-        `<div class="ant"><span class="dot" style="background:${col}"></span>
-     <span>Last 5 days of upstream basin rain: <b>${a.mm} mm</b> → <b style="color:${col}">${a.word}</b></span></div>
-     <p class="note" style="margin:10px 0 0">Wet ground makes the next rain run off faster and dirtier.</p>`;
 
       // rain watch + basins
       document.getElementById('rainwatch').innerHTML = payload.headline.rainWatch.length
         ? payload.headline.rainWatch.map(r =>
-          `🌧 <b style="color:var(--txt)">${r.mm} mm</b> basin rain ~${r.date.slice(5)}` +
-          ` → expect a discharge pulse at Toronto <b style="color:var(--txt)">~${r.arrive}</b>` +
-          (r.wet ? ' <span style="color:#fb7185">(worse — ground already wet)</span>' : '')
+          `🌧 <b style="color:var(--txt)">${inStr(r.mm)} in</b> basin rain ~${r.date.slice(5)}` +
+          ` → expect a discharge pulse at Toronto <b style="color:var(--txt)">~${r.arrive}</b>`
         ).join('<br><br>')
-        : `No notable rain (≥${RAIN_NOTABLE} mm) in the upstream basin this week.`;
+        : `No notable rain (≥${inStr(RAIN_NOTABLE, 1)} in) in the upstream basin this week.`;
 
       document.getElementById('basinlist').innerHTML = BASIN_POINTS.map(b =>
         `<div class="bp"><span>${b.name}</span><span class="co">${b.lat}, ${b.lon}</span></div>`
@@ -1366,9 +1387,6 @@
         t.classList.add('active');
         document.getElementById('p-' + t.dataset.t).classList.add('active');
       });
-
-      // refresh link
-      document.getElementById('refresh-link').onclick = e => { e.preventDefault(); location.reload(); };
     }
 
     // ─── GAUGE DETAIL VIEW (live, in-page) ─────────────────────────────────────
@@ -1500,6 +1518,7 @@
       e.preventDefault();
       location.hash = '';
     });
+    document.getElementById('refresh-btn').addEventListener('click', () => location.reload());
 
     // ─── MAIN ──────────────────────────────────────────────────────────────────
     async function main() {
