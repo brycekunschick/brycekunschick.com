@@ -4,6 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a0f1c">
   <title>Ohio River @ Toronto — Fishing Forecast</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -26,6 +27,10 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+    }
+
+    html {
+      background: #0a0f1c;
     }
 
     body {
@@ -657,7 +662,6 @@
       <div class="loader-step" id="ls-glofas">▸ GloFAS discharge forecast</div>
       <div class="loader-step" id="ls-rain">▸ Upstream basin precipitation</div>
       <div class="loader-step" id="ls-usgs">▸ USGS live gauges</div>
-      <div class="loader-step" id="ls-render">▸ Building dashboard</div>
     </div>
   </div>
 
@@ -1633,9 +1637,7 @@
         stepDone('ls-usgs');
 
         // 5. Build payload + render
-        stepActive('ls-render');
         const payload = await buildPayload(climInfo.clim, series, rainData, nowGauges, pctiles);
-        stepDone('ls-render');
 
         // Show app
         document.getElementById('loader').style.display = 'none';
