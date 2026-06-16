@@ -339,13 +339,6 @@
       border-color: rgba(34, 197, 94, .4);
     }
 
-    .watch {
-      color: #fbbf52;
-      font-weight: 600;
-      font-size: 12px;
-      margin-top: 8px;
-    }
-
     /* misc */
     h2.sec {
       font-size: 16px;
@@ -739,7 +732,7 @@
           <p class="note" style="margin:0">
             Headwater rain takes <b style="color:var(--txt)">~2–5 days</b> to reach Toronto
             (leading edge ~1–2 days when flows are already high; full peak up to ~a week for big,
-            widespread events). The discharge chart already routes this for you.
+            widespread events).
           </p>
         </div>
       </div>
@@ -750,13 +743,13 @@
         <p class="note">
           <b style="color:var(--txt)">Watch discharge, not height.</b> The New Cumberland &amp;
           Pike Island lock-and-dams hold the river's <i>height</i> nearly constant, so stage is
-          useless. They don't mask <i>discharge</i> (flow), which is what tracks high, fast, muddy water.<br><br>
+          useless. They don't mask <i>discharge</i> (flow), which is what tracks fast, muddy water.<br><br>
           <b style="color:var(--txt)">Clarity is inferred.</b> No real-time turbidity sensor exists
           near Toronto, so the verdict blends flow LEVEL (vs the season's normal) with DIRECTION
           (mud rides the rising limb; water clears on the way down).<br><br>
           <b style="color:var(--txt)">Rain is shown, not double-counted.</b> The GloFAS discharge
           forecast already bakes in forecast rainfall + soil moisture + routing. The rain tab is
-          there so you can <i>see</i> the pulse coming and understand the lag — it isn't added
+          there to show the pulse coming and understand the lag — it isn't added
           into the score again.
         </p>
       </div>
@@ -1157,7 +1150,6 @@
           label: info.label, role: info.role, site,
           cfs: Math.round(cfs), pct: Math.round(pct * 10) / 10,
           trend: trendWord(pct), pctl,
-          watch: info.role === 'local' && (pct > 25 || pctl === 'HIGH'),
           usgsUrl: `https://waterdata.usgs.gov/monitoring-location/${site}/`,
         });
       }
@@ -1401,7 +1393,6 @@
       <div class="num">${g.cfs.toLocaleString()} <span class="unit">cfs</span></div>
       <span class="tag ${dir}">${arrow} ${g.trend} (${g.pct > 0 ? '+' : ''}${g.pct}%/24h)</span>
       <span class="tag">${g.pctl || '—'}</span>
-      ${g.watch ? '<div class="watch">⚠ local creek up</div>' : ''}
       <a class="view-graph" href="#gauge/${g.site}">View Graph</a>
     </div>`;
       }).join('');
