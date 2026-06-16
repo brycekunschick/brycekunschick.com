@@ -1,298 +1,1566 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ohio River @ Toronto - Fishing Forecast</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<style>
-:root{
-  --bg:#0a0f1c; --panel:rgba(255,255,255,.045); --brd:rgba(255,255,255,.09);
-  --txt:#e8eef7; --muted:#90a3bd; --accent:#38bdf8; --accent2:#22d3ee;
-  --fish:#22c55e; --marg:#f59e0b; --skip:#ef4444;
-}
-*{box-sizing:border-box}
-body{margin:0;color:var(--txt);font-family:Inter,system-ui,Segoe UI,Roboto,sans-serif;
-  background:radial-gradient(1200px 700px at 75% -15%, #16294b 0%, #0a0f1c 55%) fixed;
-  -webkit-font-smoothing:antialiased;min-height:100vh}
-.wrap{max-width:1120px;margin:0 auto;padding:30px 20px 70px}
-.title{font-size:clamp(26px,4vw,36px);font-weight:800;letter-spacing:-.02em;margin:0;
-  background:linear-gradient(90deg,#7dd3fc,#22d3ee 55%,#34d399);
-  -webkit-background-clip:text;background-clip:text;color:transparent}
-.sub{color:var(--muted);margin:6px 0 0;font-size:14px}
-.hero{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;
-  margin:22px 0 8px;padding:18px 20px;border:1px solid var(--brd);border-radius:18px;
-  background:linear-gradient(180deg,rgba(56,189,248,.10),rgba(255,255,255,.02))}
-.hero .big{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-.hero .val{font-size:20px;font-weight:700;margin-top:3px}
-.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:24px 0 18px}
-.tab{cursor:pointer;border:1px solid var(--brd);background:var(--panel);color:var(--muted);
-  padding:9px 16px;border-radius:999px;font-size:14px;font-weight:600;transition:.15s}
-.tab:hover{color:var(--txt)}
-.tab.active{color:#06121f;background:linear-gradient(90deg,#7dd3fc,#34d399);border-color:transparent}
-.panel{display:none;animation:fade .25s ease}
-.panel.active{display:block}
-@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.card{border:1px solid var(--brd);background:var(--panel);border-radius:16px;padding:18px 18px;
-  backdrop-filter:blur(6px)}
-.grid{display:grid;gap:14px}
-.g3{grid-template-columns:repeat(3,1fr)}
-.g7{display:flex;gap:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px;scrollbar-width:none;scroll-behavior:smooth}
-.g7::-webkit-scrollbar{display:none}
-.g7 .card{flex:0 0 calc(40% - 6px);min-width:0}
-@media(min-width:860px){.g7 .card{flex:0 0 calc(14.28% - 11px)}}
-@media(max-width:860px){.g3{grid-template-columns:1fr}}
-.fcard{text-align:center;padding:14px 10px}
-.fcard .day{font-weight:700;font-size:15px}
-.fcard .date{color:var(--muted);font-size:12px;margin-bottom:8px}
-.chartbox canvas{-webkit-user-select:none;user-select:none;touch-action:pan-y}
-.badge{display:inline-block;font-weight:800;font-size:13px;letter-spacing:.03em;
-  padding:6px 12px;border-radius:999px;margin:4px 0}
-.v-FISH{background:rgba(34,197,94,.16);color:#5ee398;border:1px solid rgba(34,197,94,.4)}
-.v-MARGINAL{background:rgba(245,158,11,.16);color:#fbbf52;border:1px solid rgba(245,158,11,.4)}
-.v-SKIP{background:rgba(239,68,68,.16);color:#fb7185;border:1px solid rgba(239,68,68,.45)}
-.conf{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.fmeta{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
-.fmeta b{color:var(--txt);font-weight:600}
-.rainpill{display:inline-block;font-size:11px;padding:2px 7px;border-radius:6px;
-  background:rgba(56,189,248,.14);color:#7dd3fc;margin-top:4px}
-.rainpill.hot{background:rgba(245,158,11,.18);color:#fbbf52}
-.gauge{padding:18px}
-.gauge .lbl{font-size:13px;color:var(--muted)}
-.gauge .lbl a.glink{color:inherit;text-decoration:none;border-bottom:1px dashed rgba(255,255,255,.22)}
-.gauge .lbl a.glink:hover{color:var(--accent);border-color:var(--accent)}
-.gauge .num{font-size:30px;font-weight:800;margin:6px 0 2px}
-.gauge .unit{font-size:14px;color:var(--muted);font-weight:500}
-.tag{display:inline-block;font-size:12px;padding:3px 9px;border-radius:999px;margin-right:6px;
-  border:1px solid var(--brd);color:var(--muted)}
-.tag.up{color:#fb7185;border-color:rgba(239,68,68,.4)}
-.tag.dn{color:#5ee398;border-color:rgba(34,197,94,.4)}
-.watch{color:#fbbf52;font-weight:600;font-size:12px;margin-top:8px}
-h2.sec{font-size:16px;font-weight:700;margin:26px 0 12px;color:#cfe0f2}
-.chartbox{position:relative;height:340px}
-.note{color:var(--muted);font-size:13px;line-height:1.65}
-.legend{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:10px}
-.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
-table.t{width:100%;border-collapse:collapse;font-size:13px}
-table.t th,table.t td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--brd)}
-table.t th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
-.bp{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--brd);font-size:14px}
-.bp:last-child{border:0}
-.bp .co{color:var(--muted);font-size:12px}
-.foot{color:var(--muted);font-size:12px;text-align:center;margin-top:34px}
-a{color:var(--accent)}
-.ant{display:inline-flex;align-items:center;gap:10px;font-size:14px}
-.dot{width:10px;height:10px;border-radius:50%}
-.outstrip{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-.outchip{border:1px solid var(--brd);background:var(--panel);border-radius:12px;padding:8px 12px;font-size:13px}
-.outchip b{display:block;font-size:12px;color:var(--muted);font-weight:600}
-</style></head>
-<body><div class="wrap">
-  <h1 class="title">Ohio River &middot; Toronto, OH</h1>
-  <p class="sub">7-day forecast &nbsp;|&nbsp; <span id="gen"></span></p>
+<html lang="en">
 
-  <div class="hero" id="hero"></div>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ohio River @ Toronto — Fishing Forecast</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0a0f1c;
+      --panel: rgba(255, 255, 255, .045);
+      --brd: rgba(255, 255, 255, .09);
+      --txt: #e8eef7;
+      --muted: #90a3bd;
+      --accent: #38bdf8;
+      --accent2: #22d3ee;
+      --fish: #22c55e;
+      --marg: #f59e0b;
+      --skip: #ef4444;
+    }
 
-  <div class="tabs">
-    <div class="tab active" data-t="forecast">7-Day Forecast</div>
-    <div class="tab" data-t="now">Current Conditions</div>
-    <div class="tab" data-t="rain">Watershed Rain</div>
-    <div class="tab" data-t="how">How It Works</div>
-  </div>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  <div class="panel active" id="p-forecast">
-    <div class="g7" id="fcards"></div>
-    <h2 class="sec">Discharge trajectory (m&sup3;/s) &mdash; model median, ensemble range &amp; seasonal normal</h2>
-    <div class="card"><div class="chartbox"><canvas id="dischargeChart"></canvas></div>
-      <div class="legend">
-        <span><i style="background:#38bdf8"></i>Ensemble median</span>
-        <span><i style="background:rgba(56,189,248,.25)"></i>Likely range (p25-p75)</span>
-        <span><i style="background:#fb7185"></i>Worst-case (max)</span>
-        <span><i style="background:#94a3b8"></i>Normal (p50)</span>
-        <span><i style="background:#f59e0b"></i>High threshold (p90)</span>
-      </div></div>
-    <h2 class="sec">Outlook (days 8-11)</h2>
-    <div class="outstrip" id="outlook"></div>
-  </div>
+    body {
+      color: var(--txt);
+      font-family: Inter, system-ui, Segoe UI, Roboto, sans-serif;
+      background: radial-gradient(1200px 700px at 75% -15%, #16294b 0%, #0a0f1c 55%) fixed;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
 
-  <div class="panel" id="p-now">
-    <div class="grid g3" id="gauges"></div>
-    <h2 class="sec">Upstream ground saturation</h2>
-    <div class="card" id="antcard"></div>
-    <p class="note" style="margin-top:14px">These gauges are the ground truth right now &mdash; the river&rsquo;s
-      live flow already contains every drop of past rain. Watch the LOCAL creek: it can muddy your bank
-      even when the mainstem reads clean.<br><br><b style="color:var(--txt)">Tip:</b>
-      click a gauge name for its full 3-month history chart + a USGS link.</p>
-  </div>
+    .wrap {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 30px 20px 70px;
+    }
 
-  <div class="panel" id="p-rain">
-    <h2 class="sec" style="margin-top:6px">Upstream basin rainfall (mm/day, stacked by sub-basin)</h2>
-    <div class="card"><div class="chartbox"><canvas id="rainChart"></canvas></div></div>
-    <div class="grid g3" style="margin-top:16px">
-      <div class="card"><h2 class="sec" style="margin:0 0 10px">Rain watch</h2><div id="rainwatch" class="note"></div></div>
-      <div class="card"><h2 class="sec" style="margin:0 0 10px">Sub-basins sampled</h2><div id="basinlist"></div></div>
-      <div class="card"><h2 class="sec" style="margin:0 0 10px">Travel lag</h2>
-        <p class="note" style="margin:0">Headwater rain takes <b style="color:var(--txt)">~2-5 days</b> to reach
-        Toronto (leading edge ~1-2 days when flows are already high; full peak up to ~a week for big,
-        widespread events). The discharge chart already routes this for you.</p></div>
+    /* header */
+    .title {
+      font-size: clamp(26px, 4vw, 36px);
+      font-weight: 800;
+      letter-spacing: -.02em;
+      background: linear-gradient(90deg, #7dd3fc, #22d3ee 55%, #34d399);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin: 6px 0 0;
+      font-size: 14px;
+    }
+
+    /* hero */
+    .hero {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+      margin: 22px 0 8px;
+      padding: 18px 20px;
+      border: 1px solid var(--brd);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(56, 189, 248, .10), rgba(255, 255, 255, .02));
+    }
+
+    .hero .big {
+      font-size: 13px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .hero .val {
+      font-size: 20px;
+      font-weight: 700;
+      margin-top: 3px;
+    }
+
+    /* tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 24px 0 18px;
+    }
+
+    .tab {
+      cursor: pointer;
+      border: 1px solid var(--brd);
+      background: var(--panel);
+      color: var(--muted);
+      padding: 9px 16px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: .15s;
+    }
+
+    .tab:hover {
+      color: var(--txt);
+    }
+
+    .tab.active {
+      color: #06121f;
+      background: linear-gradient(90deg, #7dd3fc, #34d399);
+      border-color: transparent;
+    }
+
+    .panel {
+      display: none;
+      animation: fade .25s ease;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    @keyframes fade {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    /* cards */
+    .card {
+      border: 1px solid var(--brd);
+      background: var(--panel);
+      border-radius: 16px;
+      padding: 18px;
+      backdrop-filter: blur(6px);
+    }
+
+    /* grids */
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .g3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .g7 {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 8px;
+      scrollbar-width: none;
+      scroll-behavior: smooth;
+    }
+
+    .g7::-webkit-scrollbar {
+      display: none;
+    }
+
+    .g7 .card {
+      flex: 0 0 calc(40% - 6px);
+      min-width: 0;
+    }
+
+    @media(min-width:860px) {
+      .g7 .card {
+        flex: 0 0 calc(14.28% - 11px);
+      }
+    }
+
+    @media(max-width:860px) {
+      .g3 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* forecast cards */
+    .fcard {
+      text-align: center;
+      padding: 14px 10px;
+    }
+
+    .fcard .day {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .fcard .date {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    /* chart */
+    .chartbox {
+      position: relative;
+      height: 340px;
+    }
+
+    .chartbox canvas {
+      -webkit-user-select: none;
+      user-select: none;
+      touch-action: pan-y;
+    }
+
+    /* badges */
+    .badge {
+      display: inline-block;
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: .03em;
+      padding: 6px 12px;
+      border-radius: 999px;
+      margin: 4px 0;
+    }
+
+    .v-FISH {
+      background: rgba(34, 197, 94, .16);
+      color: #5ee398;
+      border: 1px solid rgba(34, 197, 94, .4);
+    }
+
+    .v-MARGINAL {
+      background: rgba(245, 158, 11, .16);
+      color: #fbbf52;
+      border: 1px solid rgba(245, 158, 11, .4);
+    }
+
+    .v-SKIP {
+      background: rgba(239, 68, 68, .16);
+      color: #fb7185;
+      border: 1px solid rgba(239, 68, 68, .45);
+    }
+
+    .conf {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .fmeta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    .fmeta b {
+      color: var(--txt);
+      font-weight: 600;
+    }
+
+    .rainpill {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, .14);
+      color: #7dd3fc;
+      margin-top: 4px;
+    }
+
+    .rainpill.hot {
+      background: rgba(245, 158, 11, .18);
+      color: #fbbf52;
+    }
+
+    /* gauge cards */
+    .gauge .lbl {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .gauge .lbl a.glink {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(255, 255, 255, .22);
+      cursor: pointer;
+    }
+
+    .gauge .lbl a.glink:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .gauge .num {
+      font-size: 30px;
+      font-weight: 800;
+      margin: 6px 0 2px;
+    }
+
+    .gauge .unit {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 12px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      margin-right: 6px;
+      border: 1px solid var(--brd);
+      color: var(--muted);
+    }
+
+    .tag.up {
+      color: #fb7185;
+      border-color: rgba(239, 68, 68, .4);
+    }
+
+    .tag.dn {
+      color: #5ee398;
+      border-color: rgba(34, 197, 94, .4);
+    }
+
+    .watch {
+      color: #fbbf52;
+      font-weight: 600;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    /* misc */
+    h2.sec {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 26px 0 12px;
+      color: #cfe0f2;
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .legend {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 10px;
+    }
+
+    .legend i {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      margin-right: 6px;
+      vertical-align: -1px;
+    }
+
+    table.t {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    table.t th,
+    table.t td {
+      padding: 9px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--brd);
+    }
+
+    table.t th {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .bp {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--brd);
+      font-size: 14px;
+    }
+
+    .bp:last-child {
+      border: 0;
+    }
+
+    .bp .co {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .foot {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      margin-top: 34px;
+    }
+
+    a {
+      color: var(--accent);
+    }
+
+    .ant {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .outstrip {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .outchip {
+      border: 1px solid var(--brd);
+      background: var(--panel);
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+
+    .outchip b {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    /* gauge detail view */
+    .back {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .back:hover {
+      color: var(--accent);
+    }
+
+    .stats {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .stat {
+      flex: 1;
+      min-width: 150px;
+      border: 1px solid var(--brd);
+      background: var(--panel);
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+
+    .stat .k {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .stat .v {
+      font-size: 24px;
+      font-weight: 800;
+      margin-top: 4px;
+    }
+
+    .stat .d {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .btn {
+      display: inline-block;
+      border: 1px solid var(--brd);
+      background: var(--panel);
+      color: var(--accent);
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+    }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 60px 0;
+    }
+
+    /* loading overlay */
+    #loader {
+      position: fixed;
+      inset: 0;
+      background: #0a0f1c;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      gap: 18px;
+    }
+
+    .spinner {
+      width: 44px;
+      height: 44px;
+      border: 3px solid rgba(56, 189, 248, .2);
+      border-top-color: #38bdf8;
+      border-radius: 50%;
+      animation: spin .9s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loader-label {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: .04em;
+    }
+
+    .loader-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .loader-step {
+      opacity: .35;
+      transition: .3s;
+    }
+
+    .loader-step.done {
+      opacity: 1;
+      color: #5ee398;
+    }
+
+    .loader-step.active {
+      opacity: 1;
+      color: #7dd3fc;
+    }
+
+    /* error */
+    .error-box {
+      border: 1px solid rgba(239, 68, 68, .4);
+      background: rgba(239, 68, 68, .08);
+      border-radius: 12px;
+      padding: 16px;
+      color: #fb7185;
+      font-size: 13px;
+      margin: 12px 0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Loading overlay -->
+  <div id="loader">
+    <div class="spinner"></div>
+    <div class="loader-label">Fetching river data…</div>
+    <div class="loader-steps">
+      <div class="loader-step" id="ls-clim">▸ GloFAS climatology (11-yr baseline)</div>
+      <div class="loader-step" id="ls-glofas">▸ GloFAS discharge forecast</div>
+      <div class="loader-step" id="ls-rain">▸ Upstream basin precipitation</div>
+      <div class="loader-step" id="ls-usgs">▸ USGS live gauges</div>
+      <div class="loader-step" id="ls-render">▸ Building dashboard</div>
     </div>
   </div>
 
-  <div class="panel" id="p-how">
-    <div class="card"><p class="note">
-      <b style="color:var(--txt)">Watch discharge, not height.</b> The New Cumberland &amp; Pike Island
-      lock-and-dams hold the river&rsquo;s <i>height</i> nearly constant, so stage is useless. They don&rsquo;t
-      mask <i>discharge</i> (flow), which is what tracks high, fast, muddy water.<br><br>
-      <b style="color:var(--txt)">Clarity is inferred, then calibrated.</b> No real-time turbidity sensor exists
-      near Toronto, so the verdict blends flow LEVEL (vs the season&rsquo;s normal) with DIRECTION (mud rides the
-      rising limb; water clears on the way down). Log trips with <code>--log 1..5</code> to tune it to your eyes.<br><br>
-      <b style="color:var(--txt)">Rain is shown, not double-counted.</b> The GloFAS discharge forecast already
-      bakes in forecast rainfall + soil moisture + routing. The rain tab is there so you can <i>see</i> the pulse
-      coming and understand the lag &mdash; it isn&rsquo;t added into the score again.
-    </p></div>
-    <h2 class="sec">How each day is scored</h2>
-    <div class="card"><table class="t">
-      <tr><th>Ingredient</th><th>Rule</th><th>Points</th></tr>
-      <tr><td>Level (flow vs monthly normal)</td><td>&le; median / above normal / high / very high</td><td>0 / +1 / +2 / +3</td></tr>
-      <tr><td>Trend (hysteresis)</td><td>rising hard / rising / clearing</td><td>+2 / +1 / &minus;1</td></tr>
-      <tr><td>Blow-out risk (ensemble)</td><td>p75 reaches &ldquo;high&rdquo;, wide spread, or max &ge; 2.2&times; median</td><td>+1</td></tr>
-      <tr><td colspan="2"><b>Verdict</b></td><td>&le;0 FISH &middot; 1-2 MARGINAL &middot; &ge;3 SKIP</td></tr>
-    </table></div>
-  </div>
+  <!-- ===== DASHBOARD ===== -->
+  <div class="wrap" id="app" style="display:none">
+    <h1 class="title">Ohio River &middot; Toronto, OH</h1>
+    <p class="sub">Live 7-day forecast &nbsp;|&nbsp; <span id="gen"></span> &nbsp;|&nbsp;
+      <a href="#" id="refresh-link" style="color:var(--muted);font-size:13px">↺ refresh</a>
+    </p>
 
-  <div style="text-align:center;margin-top:30px">
-    <a href="https://www.wkbn.com/weather-cameras/east-liverpool/" target="_blank" rel="noopener"
-       style="display:inline-block;border:1px solid var(--brd);background:var(--panel);color:var(--muted);
+    <div class="hero" id="hero"></div>
+
+    <div class="tabs">
+      <div class="tab active" data-t="forecast">7-Day Forecast</div>
+      <div class="tab" data-t="now">Current Conditions</div>
+      <div class="tab" data-t="rain">Watershed Rain</div>
+      <div class="tab" data-t="how">How It Works</div>
+    </div>
+
+    <div class="panel active" id="p-forecast">
+      <div class="g7" id="fcards"></div>
+      <h2 class="sec">Discharge trajectory (m³/s) — model median, ensemble range &amp; seasonal normal</h2>
+      <div class="card">
+        <div class="chartbox"><canvas id="dischargeChart"></canvas></div>
+        <div class="legend">
+          <span><i style="background:#38bdf8"></i>Ensemble median</span>
+          <span><i style="background:rgba(56,189,248,.25)"></i>Likely range (p25–p75)</span>
+          <span><i style="background:#fb7185"></i>Worst-case (max)</span>
+          <span><i style="background:#94a3b8"></i>Normal (p50)</span>
+          <span><i style="background:#f59e0b"></i>High threshold (p90)</span>
+        </div>
+      </div>
+      <h2 class="sec">Outlook (days 8–11)</h2>
+      <div class="outstrip" id="outlook"></div>
+    </div>
+
+    <div class="panel" id="p-now">
+      <div class="grid g3" id="gauges"></div>
+      <h2 class="sec">Upstream ground saturation</h2>
+      <div class="card" id="antcard"></div>
+      <p class="note" style="margin-top:14px">
+        These gauges are the ground truth right now — the river's live flow already contains
+        every drop of past rain. Watch the LOCAL creek: it can muddy your bank even when the
+        mainstem reads clean.<br><br>
+        <b style="color:var(--txt)">Tip:</b> click a gauge name for its full 3-month history chart.
+        Discharge matters, not height — the lock-and-dams regulate height, not flow.
+      </p>
+    </div>
+
+    <div class="panel" id="p-rain">
+      <h2 class="sec" style="margin-top:6px">Upstream basin rainfall (mm/day, stacked by sub-basin)</h2>
+      <div class="card">
+        <div class="chartbox"><canvas id="rainChart"></canvas></div>
+      </div>
+      <div class="grid g3" style="margin-top:16px">
+        <div class="card">
+          <h2 class="sec" style="margin:0 0 10px">Rain watch</h2>
+          <div id="rainwatch" class="note"></div>
+        </div>
+        <div class="card">
+          <h2 class="sec" style="margin:0 0 10px">Sub-basins sampled</h2>
+          <div id="basinlist"></div>
+        </div>
+        <div class="card">
+          <h2 class="sec" style="margin:0 0 10px">Travel lag</h2>
+          <p class="note" style="margin:0">
+            Headwater rain takes <b style="color:var(--txt)">~2–5 days</b> to reach Toronto
+            (leading edge ~1–2 days when flows are already high; full peak up to ~a week for big,
+            widespread events). The discharge chart already routes this for you.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="p-how">
+      <div class="card">
+        <p class="note">
+          <b style="color:var(--txt)">Watch discharge, not height.</b> The New Cumberland &amp;
+          Pike Island lock-and-dams hold the river's <i>height</i> nearly constant, so stage is
+          useless. They don't mask <i>discharge</i> (flow), which is what tracks high, fast, muddy water.<br><br>
+          <b style="color:var(--txt)">Clarity is inferred.</b> No real-time turbidity sensor exists
+          near Toronto, so the verdict blends flow LEVEL (vs the season's normal) with DIRECTION
+          (mud rides the rising limb; water clears on the way down).<br><br>
+          <b style="color:var(--txt)">Rain is shown, not double-counted.</b> The GloFAS discharge
+          forecast already bakes in forecast rainfall + soil moisture + routing. The rain tab is
+          there so you can <i>see</i> the pulse coming and understand the lag — it isn't added
+          into the score again.
+        </p>
+      </div>
+      <h2 class="sec">How each day is scored</h2>
+      <div class="card">
+        <table class="t">
+          <tr>
+            <th>Ingredient</th>
+            <th>Rule</th>
+            <th>Points</th>
+          </tr>
+          <tr>
+            <td>Level (flow vs monthly normal)</td>
+            <td>≤ median / above normal / high / very high</td>
+            <td>0 / +1 / +2 / +3</td>
+          </tr>
+          <tr>
+            <td>Trend (hysteresis)</td>
+            <td>rising hard / rising / clearing</td>
+            <td>+2 / +1 / −1</td>
+          </tr>
+          <tr>
+            <td>Blow-out risk (ensemble)</td>
+            <td>p75 reaches "high", wide spread, or max ≥ 2.2× median</td>
+            <td>+1</td>
+          </tr>
+          <tr>
+            <td colspan="2"><b>Verdict</b></td>
+            <td>≤0 FISH · 1–2 MARGINAL · ≥3 SKIP</td>
+          </tr>
+        </table>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h2 class="sec" style="margin:0 0 10px">Climatology cache</h2>
+        <p class="note" id="clim-status"></p>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:30px">
+      <a href="https://www.wkbn.com/weather-cameras/east-liverpool/" target="_blank" rel="noopener" style="display:inline-block;border:1px solid var(--brd);background:var(--panel);color:var(--muted);
        padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;text-decoration:none">
-       &#128247; Live Camera</a>
+        📷 Live Camera</a>
+      &nbsp;
+      <a href="https://waterdata.usgs.gov/monitoring-location/03109500/" target="_blank" rel="noopener" style="display:inline-block;border:1px solid var(--brd);background:var(--panel);color:var(--muted);
+       padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;text-decoration:none">
+        📊 USGS Gauge</a>
+    </div>
+    <p class="foot">Data: USGS NWIS · GloFAS/ECMWF via Open-Meteo · Open-Meteo precip.
+      Climatology cached locally for ~200 days. &nbsp; Tight lines. 🎣</p>
   </div>
-  <p class="foot">Data: USGS NWIS &middot; GloFAS/ECMWF via Open-Meteo &middot; Open-Meteo precip.
-     Tight lines. &#x1F3A3;</p>
-</div>
 
-<script>
-const DATA = {"generated": "Monday Jun 15, 2026  07:26 PM ET", "now": [{"label": "Ohio R @ Sewickley (mainstem, ~1-2 day lead)", "role": "lead", "cfs": 16700, "pct": 14.4, "trend": "rising", "pctl": "below normal", "site": "03086000", "page": "gauge_03086000.html", "watch": false}, {"label": "Beaver R @ Beaver Falls (tributary)", "role": "trib", "cfs": 2600, "pct": 81.8, "trend": "RISING HARD", "pctl": "above normal", "site": "03107500", "page": "gauge_03107500.html", "watch": false}, {"label": "Little Beaver Ck @ E.Liverpool (LOCAL mud)", "role": "local", "cfs": 423, "pct": 81.5, "trend": "RISING HARD", "pctl": "above normal", "site": "03109500", "page": "gauge_03109500.html", "watch": true}], "antecedent": {"mm": 30, "word": "WET - rain primes runoff"}, "forecast": [{"date": "2026-06-15", "dayname": "Mon", "q": 674, "level": "below normal", "trend": "steady", "rain": 0.0, "notable": false, "upside": "-", "verdict": "FISH", "conf": "high"}, {"date": "2026-06-16", "dayname": "Tue", "q": 717, "level": "below normal", "trend": "steady", "rain": 0.0, "notable": false, "upside": "-", "verdict": "FISH", "conf": "high"}, {"date": "2026-06-17", "dayname": "Wed", "q": 727, "level": "below normal", "trend": "steady", "rain": 1.0, "notable": false, "upside": "-", "verdict": "FISH", "conf": "high"}, {"date": "2026-06-18", "dayname": "Thu", "q": 718, "level": "below normal", "trend": "steady", "rain": 23.6, "notable": true, "upside": "-", "verdict": "FISH", "conf": "med"}, {"date": "2026-06-19", "dayname": "Fri", "q": 700, "level": "below normal", "trend": "steady", "rain": 2.2, "notable": false, "upside": "-", "verdict": "FISH", "conf": "med"}, {"date": "2026-06-20", "dayname": "Sat", "q": 723, "level": "below normal", "trend": "steady", "rain": 0.0, "notable": false, "upside": "spike possible", "verdict": "MARGINAL", "conf": "low"}, {"date": "2026-06-21", "dayname": "Sun", "q": 798, "level": "below normal", "trend": "rising", "rain": 1.5, "notable": false, "upside": "spike possible", "verdict": "MARGINAL", "conf": "low"}], "outlook": [{"date": "2026-06-22", "dayname": "Mon", "q": 780, "level": "below normal"}, {"date": "2026-06-23", "dayname": "Tue", "q": 837, "level": "below normal"}, {"date": "2026-06-24", "dayname": "Wed", "q": 1039, "level": "above normal"}, {"date": "2026-06-25", "dayname": "Thu", "q": 1389, "level": "above normal"}], "headline": {"best": [{"date": "2026-06-15", "dayname": "Mon", "q": 674, "level": "below normal", "trend": "steady", "rain": 0.0, "notable": false, "upside": "-", "verdict": "FISH", "conf": "high"}, {"date": "2026-06-16", "dayname": "Tue", "q": 717, "level": "below normal", "trend": "steady", "rain": 0.0, "notable": false, "upside": "-", "verdict": "FISH", "conf": "high"}, {"date": "2026-06-17", "dayname": "Wed", "q": 727, "level": "below normal", "trend": "steady", "rain": 1.0, "notable": false, "upside": "-", "verdict": "FISH", "conf": "high"}, {"date": "2026-06-18", "dayname": "Thu", "q": 718, "level": "below normal", "trend": "steady", "rain": 23.6, "notable": true, "upside": "-", "verdict": "FISH", "conf": "med"}, {"date": "2026-06-19", "dayname": "Fri", "q": 700, "level": "below normal", "trend": "steady", "rain": 2.2, "notable": false, "upside": "-", "verdict": "FISH", "conf": "med"}], "avoid": [], "rain_watch": [{"mm": 24, "date": "2026-06-18", "arrive": "Sun 06-21", "wet": true}]}, "discharge": [{"date": "2026-06-08", "median": 527.45, "p25": 526.23, "p75": 529.88, "max": 541.0, "clim_p50": 846, "clim_p90": 2112, "past": true}, {"date": "2026-06-09", "median": 501.34, "p25": 501.34, "p75": 501.34, "max": 501.34, "clim_p50": 846, "clim_p90": 2112, "past": true}, {"date": "2026-06-10", "median": 533.56, "p25": 532.33, "p75": 536.03, "max": 542.25, "clim_p50": 846, "clim_p90": 2112, "past": true}, {"date": "2026-06-11", "median": 505.99, "p25": 502.5, "p75": 510.68, "max": 593.29, "clim_p50": 846, "clim_p90": 2112, "past": true}, {"date": "2026-06-12", "median": 513.04, "p25": 508.04, "p75": 526.53, "max": 554.9, "clim_p50": 846, "clim_p90": 2112, "past": true}, {"date": "2026-06-13", "median": 565.89, "p25": 557.47, "p75": 578.76, "max": 629.96, "clim_p50": 846, "clim_p90": 2112, "past": true}, {"date": "2026-06-14", "median": 643.17, "p25": 643.17, "p75": 644.65, "max": 644.65, "clim_p50": 846, "clim_p90": 2112, "past": true}, {"date": "2026-06-15", "median": 674.31, "p25": 665.81, "p75": 687.65, "max": 736.9, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-16", "median": 716.79, "p25": 715.14, "p75": 718.45, "max": 725.11, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-17", "median": 726.78, "p25": 723.44, "p75": 731.82, "max": 750.62, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-18", "median": 717.62, "p25": 710.21, "p75": 726.78, "max": 745.45, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-19", "median": 700.46, "p25": 683.7, "p75": 728.46, "max": 1296.18, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-20", "median": 723.44, "p25": 676.26, "p75": 810.43, "max": 2587.21, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-21", "median": 797.91, "p25": 679.38, "p75": 967.28, "max": 4644.15, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-22", "median": 779.73, "p25": 670.05, "p75": 1134.07, "max": 4334.11, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-23", "median": 837.49, "p25": 653.26, "p75": 1595.86, "max": 3907.41, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-24", "median": 1039.06, "p25": 664.66, "p75": 2090.74, "max": 4496.8, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-25", "median": 1389.32, "p25": 762.09, "p75": 2388.19, "max": 4953.5, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-26", "median": 1323.34, "p25": 801.08, "p75": 1997.05, "max": 4148.54, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-27", "median": 1211.01, "p25": 778.47, "p75": 1735.81, "max": 3139.51, "clim_p50": 846, "clim_p90": 2112, "past": false}, {"date": "2026-06-28", "median": 1104.36, "p25": 717.25, "p75": 1451.95, "max": 2611.16, "clim_p50": 846, "clim_p90": 2112, "past": false}], "today_index": 7, "rain": [{"date": "2026-06-10", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 0.0, "Mon headwaters": 4.4, "Beaver basin": 26.4}, "basin_avg": 7.7, "past": true}, {"date": "2026-06-11", "points": {"Pittsburgh/confluence": 1.8, "Allegheny headwaters": 1.8, "Mon headwaters": 0.7, "Beaver basin": 0.4}, "basin_avg": 1.2, "past": true}, {"date": "2026-06-12", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 0.0, "Mon headwaters": 0.0, "Beaver basin": 0.0}, "basin_avg": 0.0, "past": true}, {"date": "2026-06-13", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 0.0, "Mon headwaters": 0.0, "Beaver basin": 0.0}, "basin_avg": 0.0, "past": true}, {"date": "2026-06-14", "points": {"Pittsburgh/confluence": 0.7, "Allegheny headwaters": 5.4, "Mon headwaters": 50.0, "Beaver basin": 29.2}, "basin_avg": 21.3, "past": true}, {"date": "2026-06-15", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 0.0, "Mon headwaters": 0.0, "Beaver basin": 0.0}, "basin_avg": 0.0, "past": false}, {"date": "2026-06-16", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 0.0, "Mon headwaters": 0.0, "Beaver basin": 0.0}, "basin_avg": 0.0, "past": false}, {"date": "2026-06-17", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 3.0, "Mon headwaters": 0.0, "Beaver basin": 1.0}, "basin_avg": 1.0, "past": false}, {"date": "2026-06-18", "points": {"Pittsburgh/confluence": 32.9, "Allegheny headwaters": 19.0, "Mon headwaters": 18.1, "Beaver basin": 24.4}, "basin_avg": 23.6, "past": false}, {"date": "2026-06-19", "points": {"Pittsburgh/confluence": 2.0, "Allegheny headwaters": 2.1, "Mon headwaters": 1.5, "Beaver basin": 3.1}, "basin_avg": 2.2, "past": false}, {"date": "2026-06-20", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 0.0, "Mon headwaters": 0.0, "Beaver basin": 0.0}, "basin_avg": 0.0, "past": false}, {"date": "2026-06-21", "points": {"Pittsburgh/confluence": 0.3, "Allegheny headwaters": 4.2, "Mon headwaters": 0.0, "Beaver basin": 1.5}, "basin_avg": 1.5, "past": false}, {"date": "2026-06-22", "points": {"Pittsburgh/confluence": 3.9, "Allegheny headwaters": 0.0, "Mon headwaters": 14.7, "Beaver basin": 6.9}, "basin_avg": 6.4, "past": false}, {"date": "2026-06-23", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 0.0, "Mon headwaters": 0.3, "Beaver basin": 0.0}, "basin_avg": 0.1, "past": false}, {"date": "2026-06-24", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 0.0, "Mon headwaters": 1.8, "Beaver basin": 0.0}, "basin_avg": 0.5, "past": false}, {"date": "2026-06-25", "points": {"Pittsburgh/confluence": 4.2, "Allegheny headwaters": 2.1, "Mon headwaters": 0.9, "Beaver basin": 3.6}, "basin_avg": 2.7, "past": false}, {"date": "2026-06-26", "points": {"Pittsburgh/confluence": 1.2, "Allegheny headwaters": 1.8, "Mon headwaters": 3.0, "Beaver basin": 0.9}, "basin_avg": 1.7, "past": false}, {"date": "2026-06-27", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 0.0, "Mon headwaters": 0.0, "Beaver basin": 0.0}, "basin_avg": 0.0, "past": false}, {"date": "2026-06-28", "points": {"Pittsburgh/confluence": 0.0, "Allegheny headwaters": 0.3, "Mon headwaters": 0.0, "Beaver basin": 0.0}, "basin_avg": 0.1, "past": false}], "rain_today_index": 5, "basin_points": [{"name": "Pittsburgh/confluence", "lat": 40.445, "lon": -80.006}, {"name": "Allegheny headwaters", "lat": 41.858, "lon": -79.162}, {"name": "Mon headwaters", "lat": 39.641, "lon": -79.957}, {"name": "Beaver basin", "lat": 40.987, "lon": -80.34}], "notable_mm": 15.0};
-document.getElementById('gen').textContent = DATA.generated;
+  <!-- ===== GAUGE DETAIL VIEW (in-page, live-fetched) ===== -->
+  <div class="wrap" id="detail" style="display:none">
+    <a class="back" id="d-back">&larr; Back to dashboard</a>
+    <h1 class="title" id="d-title" style="margin-top:14px"></h1>
+    <p class="sub" id="d-sub"></p>
+    <div class="stats" id="d-stats" style="margin-top:18px"></div>
+    <div class="card" id="d-card">
+      <div class="chartbox" style="height:420px"><canvas id="d-chart"></canvas></div>
+    </div>
+    <div style="margin-top:18px">
+      <a class="btn" id="d-usgs" href="#" target="_blank" rel="noopener">View live data on USGS &#8599;</a>
+    </div>
+    <p class="foot">Source: USGS NWIS instantaneous values, resampled hourly · past 3 months. 🎣</p>
+  </div>
 
-/* ---- hero ---- */
-(function(){
-  const h = DATA.headline;
-  const best = h.best.map(f=>f.dayname+' '+f.date.slice(5)).join(', ') || 'none clearly clean this week';
-  const avoid = h.avoid.map(f=>f.dayname+' '+f.date.slice(5)).join(', ') || 'none';
-  let rw = '';
-  if(h.rain_watch.length){const r=h.rain_watch[0];
-    rw = `<div><div class="big">Rain watch</div><div class="val">${r.mm} mm &rarr; pulse ~${r.arrive}</div></div>`;}
-  document.getElementById('hero').innerHTML =
-    `<div><div class="big">Preferable Conditions</div><div class="val" style="color:#5ee398">${best}</div></div>`+
-    `<div><div class="big">Avoid</div><div class="val" style="color:#fb7185">${avoid}</div></div>`+ rw;
-})();
+  <script>
+    'use strict';
 
-/* ---- forecast cards ---- */
-document.getElementById('fcards').innerHTML = DATA.forecast.map(f=>{
-  const rp = f.rain>0 ? `<div class="rainpill ${f.notable?'hot':''}">&#127783; ${f.rain} mm</div>`:'';
-  const up = (f.upside && f.upside!=='-') ? `<div class="fmeta">if it rains: <b>${f.upside}</b></div>`:'';
-  return `<div class="card fcard">
-    <div class="day">${f.dayname}</div><div class="date">${f.date.slice(5)}</div>
-    <div class="badge v-${f.verdict}">${f.verdict}</div>
-    <div class="conf">${f.conf} conf</div>
-    <div class="fmeta"><b>${f.q}</b> m&sup3;/s<br>${f.level} &middot; ${f.trend}</div>
-    ${rp}${up}</div>`;
-}).join('');
+    // ─── CONFIG ────────────────────────────────────────────────────────────────
+    const TORONTO = [40.464, -80.601];
+    const RAIN_NOTABLE = 15.0;
+    const PULSE_LAG = 3;
+    const CLIM_KEY = 'river_clim_v3';
+    const CLIM_MAX_DAYS = 200;
+    const HISTORY_DAYS = 92;      // ~3 months for gauge detail
+    const HISTORY_STEP_HOURS = 1; // resample bucket size
 
-/* ---- outlook ---- */
-document.getElementById('outlook').innerHTML = DATA.outlook.map(o=>
-  `<div class="outchip"><b>${o.dayname} ${o.date.slice(5)}</b>${o.q} m&sup3;/s &middot; ${o.level}</div>`
-).join('') || '<span class="note">No extended outlook available.</span>';
+    const USGS_SITES = {
+      '03086000': { label: 'Ohio R @ Sewickley (mainstem, ~1-2 day lead)', role: 'lead' },
+      '03107500': { label: 'Beaver R @ Beaver Falls (tributary)', role: 'trib' },
+      '03109500': { label: 'Little Beaver Ck @ E.Liverpool (LOCAL mud)', role: 'local' },
+    };
 
-/* ---- gauges ---- */
-document.getElementById('gauges').innerHTML = DATA.now.map(g=>{
-  const dir = g.pct>5?'up':(g.pct<-5?'dn':'');
-  const arrow = g.pct>5?'&#9650;':(g.pct<-5?'&#9660;':'&#9644;');
-  return `<div class="card gauge">
-    <div class="lbl"><a class="glink" href="${g.page}">${g.label} <span style="opacity:.55">&#8599;</span></a></div>
-    <div class="num">${g.cfs.toLocaleString()} <span class="unit">cfs</span></div>
-    <span class="tag ${dir}">${arrow} ${g.trend} (${g.pct>0?'+':''}${g.pct}%/24h)</span>
-    <span class="tag">${g.pctl||'—'}</span>
-    ${g.watch?'<div class="watch">&#9888; local creek up &mdash; nearshore mud risk</div>':''}</div>`;
-}).join('');
+    const BASIN_POINTS = [
+      { lat: 40.445, lon: -80.006, name: 'Pittsburgh/confluence' },
+      { lat: 41.858, lon: -79.162, name: 'Allegheny headwaters' },
+      { lat: 39.641, lon: -79.957, name: 'Mon headwaters' },
+      { lat: 40.987, lon: -80.340, name: 'Beaver basin' },
+    ];
 
-/* ---- antecedent ---- */
-(function(){
-  const a=DATA.antecedent; const col = a.mm>25?'#fb7185':(a.mm>8?'#fbbf52':'#5ee398');
-  document.getElementById('antcard').innerHTML =
-    `<div class="ant"><span class="dot" style="background:${col}"></span>
-     <span>Last 5 days of upstream basin rain: <b>${a.mm} mm</b> &rarr; <b style="color:${col}">${a.word}</b></span></div>
+    // ─── LOADER UI ─────────────────────────────────────────────────────────────
+    function stepDone(id) { const el = document.getElementById(id); if (el) { el.classList.add('done'); el.classList.remove('active'); } }
+    function stepActive(id) { const el = document.getElementById(id); if (el) { el.classList.add('active'); } }
+
+    // ─── FETCH HELPERS ─────────────────────────────────────────────────────────
+    async function getJSON(url) {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`HTTP ${r.status}: ${url}`);
+      return r.json();
+    }
+
+    function isoDate(d) { return d.toISOString().slice(0, 10); }
+
+    function today() { return new Date(); }
+
+    function addDays(d, n) {
+      const r = new Date(d); r.setDate(r.getDate() + n); return r;
+    }
+
+    function dayName(iso) {
+      return new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' });
+    }
+
+    function pad2(n) { return String(n).padStart(2, '0'); }
+
+    // ─── 1. GLOFAS CLIMATOLOGY ─────────────────────────────────────────────────
+    function loadCachedClim() {
+      try {
+        const raw = localStorage.getItem(CLIM_KEY);
+        if (!raw) return null;
+        const c = JSON.parse(raw);
+        const age = (Date.now() - new Date(c.built).getTime()) / 86400000;
+        if (age < CLIM_MAX_DAYS && c.months) return c;
+      } catch (e) { }
+      return null;
+    }
+
+    function saveCachedClim(clim) {
+      try { localStorage.setItem(CLIM_KEY, JSON.stringify(clim)); } catch (e) { }
+    }
+
+    function pctl(sorted, p) {
+      if (!sorted.length) return null;
+      const i = Math.round(p * (sorted.length - 1));
+      return sorted[i];
+    }
+
+    async function buildClimatology() {
+      const endDate = new Date(); endDate.setDate(1); endDate.setDate(0); // last day of prev month
+      const startDate = new Date(endDate.getFullYear() - 11, 0, 1);
+      const url = `https://flood-api.open-meteo.com/v1/flood`
+        + `?latitude=${TORONTO[0]}&longitude=${TORONTO[1]}`
+        + `&daily=river_discharge`
+        + `&start_date=${isoDate(startDate)}&end_date=${isoDate(endDate)}`;
+      const data = await getJSON(url);
+      const times = data.daily.time;
+      const vals = data.daily.river_discharge;
+      const byMonth = {};
+      for (let m = 1; m <= 12; m++) byMonth[m] = [];
+      for (let i = 0; i < times.length; i++) {
+        if (vals[i] == null) continue;
+        const m = parseInt(times[i].slice(5, 7));
+        byMonth[m].push(vals[i]);
+      }
+      const months = {};
+      for (let m = 1; m <= 12; m++) {
+        const s = [...byMonth[m]].sort((a, b) => a - b);
+        months[m] = { p10: pctl(s, .10), p50: pctl(s, .50), p75: pctl(s, .75), p90: pctl(s, .90), n: s.length };
+      }
+      const clim = { built: new Date().toISOString(), months };
+      saveCachedClim(clim);
+      return clim;
+    }
+
+    async function getClimatology() {
+      const cached = loadCachedClim();
+      if (cached) {
+        const ageDays = (Date.now() - new Date(cached.built).getTime()) / 86400000;
+        return { clim: cached, fromCache: true, ageDays: Math.round(ageDays) };
+      }
+      const clim = await buildClimatology();
+      return { clim, fromCache: false, ageDays: 0 };
+    }
+
+    // ─── 2. GLOFAS FORECAST SERIES ─────────────────────────────────────────────
+    async function getGloFASSeries(pastDays = 7, forecastDays = 14) {
+      const url = `https://flood-api.open-meteo.com/v1/flood`
+        + `?latitude=${TORONTO[0]}&longitude=${TORONTO[1]}`
+        + `&daily=river_discharge,river_discharge_median,river_discharge_p25,river_discharge_p75,river_discharge_max`
+        + `&forecast_days=${forecastDays}&past_days=${pastDays}`;
+      const d = (await getJSON(url)).daily;
+      return d.time.map((date, i) => ({
+        date,
+        control: d.river_discharge[i],
+        median: d.river_discharge_median[i] ?? d.river_discharge[i],
+        p25: d.river_discharge_p25[i],
+        p75: d.river_discharge_p75[i],
+        max: d.river_discharge_max[i],
+      }));
+    }
+
+    // ─── 3. PRECIPITATION ──────────────────────────────────────────────────────
+    async function getRainDetail(pastDays = 5, forecastDays = 14) {
+      const lats = BASIN_POINTS.map(p => p.lat).join(',');
+      const lons = BASIN_POINTS.map(p => p.lon).join(',');
+      const url = `https://api.open-meteo.com/v1/forecast`
+        + `?latitude=${lats}&longitude=${lons}`
+        + `&daily=precipitation_sum`
+        + `&forecast_days=${forecastDays}&past_days=${pastDays}`
+        + `&timezone=America/New_York`;
+      let arr = await getJSON(url);
+      if (!Array.isArray(arr)) arr = [arr];
+      const times = arr[0].daily.time;
+      const perPoint = {};
+      BASIN_POINTS.forEach((bp, k) => {
+        const vals = arr[k].daily.precipitation_sum;
+        perPoint[bp.name] = {};
+        times.forEach((t, i) => { perPoint[bp.name][t] = vals[i] ?? 0; });
+      });
+      const basinAvg = {};
+      times.forEach(t => {
+        const day = BASIN_POINTS.map(bp => perPoint[bp.name][t] ?? 0);
+        basinAvg[t] = day.reduce((a, b) => a + b, 0) / day.length;
+      });
+      return { perPoint, basinAvg, times };
+    }
+
+    // ─── 4. USGS LIVE GAUGES (current) ─────────────────────────────────────────
+    async function getUSGSNow() {
+      const sites = Object.keys(USGS_SITES).join(',');
+      const url = `https://waterservices.usgs.gov/nwis/iv/?format=json`
+        + `&sites=${sites}&parameterCd=00060&period=P3D&siteStatus=all`;
+      const data = await getJSON(url);
+      const out = {};
+      for (const ts of (data.value?.timeSeries ?? [])) {
+        const site = ts.sourceInfo.siteCode[0].value;
+        const pts = [];
+        for (const v of ts.values[0].value) {
+          const val = parseFloat(v.value);
+          if (isNaN(val) || val <= -999) continue;
+          pts.push([new Date(v.dateTime), val]);
+        }
+        if (!pts.length) continue;
+        pts.sort((a, b) => a[0] - b[0]);
+        const [latestT, latest] = pts[pts.length - 1];
+        const target = new Date(latestT - 86400000);
+        let best = pts[0];
+        for (const p of pts) { if (Math.abs(p[0] - target) < Math.abs(best[0] - target)) best = p; }
+        const dayAgo = best[1];
+        const pct = dayAgo ? (latest - dayAgo) / dayAgo * 100 : 0;
+        out[site] = { cfs: latest, pct };
+      }
+      return out;
+    }
+
+    async function getUSGSPercentile(site, cfs) {
+      const today = new Date();
+      const m = today.getMonth() + 1, d = today.getDate();
+      const url = `https://waterservices.usgs.gov/nwis/stat/?format=rdb`
+        + `&sites=${site}&statReportType=daily&statTypeCd=p10,p50,p90&parameterCd=00060`;
+      try {
+        const r = await fetch(url);
+        const txt = await r.text();
+        const lines = txt.split('\n').filter(l => l && !l.startsWith('#'));
+        if (lines.length < 3) return '';
+        const headers = lines[0].split('\t');
+        const idx = {};
+        headers.forEach((h, i) => idx[h] = i);
+        for (const ln of lines.slice(2)) {
+          const c = ln.split('\t');
+          if (parseInt(c[idx['month_nu']]) !== m) continue;
+          if (parseInt(c[idx['day_nu']]) !== d) continue;
+          const p10 = parseFloat(c[idx['p10_va']]);
+          const p50 = parseFloat(c[idx['p50_va']]);
+          const p90 = parseFloat(c[idx['p90_va']]);
+          if (isNaN(p50)) return '';
+          if (!isNaN(p10) && cfs <= p10) return 'very low';
+          if (cfs <= p50) return 'below normal';
+          if (!isNaN(p90) && cfs > p90) return 'HIGH';
+          return 'above normal';
+        }
+      } catch (e) { }
+      return '';
+    }
+
+    // ─── 4b. USGS 3-MONTH HISTORY (for the gauge detail view) ───────────────────
+    // Mirrors the old Python usgs_history(): instantaneous discharge resampled to
+    // hourly buckets (averaged), returned as [{t:"YYYY-MM-DD HH:00", q:cfs}, ...].
+    async function getUSGSHistory(site, days = HISTORY_DAYS, stepHours = HISTORY_STEP_HOURS) {
+      const end = new Date();
+      const start = addDays(end, -days);
+      const url = `https://waterservices.usgs.gov/nwis/iv/?format=json`
+        + `&sites=${site}&parameterCd=00060`
+        + `&startDT=${isoDate(start)}&endDT=${isoDate(end)}`;
+      const data = await getJSON(url);
+      const tsList = data.value?.timeSeries ?? [];
+      let series = tsList.find(s => s.variable?.variableCode?.[0]?.value === '00060') || tsList[0];
+      if (!series) return [];
+
+      const raw = [];
+      for (const v of series.values[0].value) {
+        const q = parseFloat(v.value);
+        if (isNaN(q) || q <= -999) continue;
+        raw.push([new Date(v.dateTime), q]);
+      }
+
+      // resample: average all readings within each stepHours bucket
+      const buckets = new Map();
+      for (const [t, q] of raw) {
+        const h = Math.floor(t.getHours() / stepHours) * stepHours;
+        const key = new Date(t.getFullYear(), t.getMonth(), t.getDate(), h, 0, 0, 0).getTime();
+        if (!buckets.has(key)) buckets.set(key, []);
+        buckets.get(key).push(q);
+      }
+      return [...buckets.keys()].sort((a, b) => a - b).map(k => {
+        const arr = buckets.get(k);
+        const dt = new Date(k);
+        const tstr = `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())} ${pad2(dt.getHours())}:00`;
+        return { t: tstr, q: Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) };
+      });
+    }
+
+    // ─── SCORING LOGIC (mirrors Python exactly) ────────────────────────────────
+    function bandFor(q, mc) {
+      if (q <= mc.p10) return ['very low', 0];
+      if (q <= mc.p50) return ['below normal', 0];
+      if (q <= mc.p75) return ['above normal', 1];
+      if (q <= mc.p90) return ['high', 2];
+      return ['VERY HIGH', 3];
+    }
+
+    function trendWord(pct) {
+      if (pct > 25) return 'RISING HARD';
+      if (pct > 10) return 'rising';
+      if (pct < -25) return 'dropping fast';
+      if (pct < -10) return 'falling';
+      return 'steady';
+    }
+
+    function classify(med, mc, pctChange, p25, p75, mx, horizon) {
+      const [levelWord, level] = bandFor(med, mc);
+      let score = level;
+      let trendW;
+      if (pctChange == null) { trendW = 'n/a'; }
+      else if (pctChange > 25) { trendW = 'RISING HARD'; score += 2; }
+      else if (pctChange > 10) { trendW = 'rising'; score += 1; }
+      else if (pctChange < -15) { trendW = 'clearing'; score -= 1; }
+      else if (pctChange < -5) { trendW = 'falling'; }
+      else { trendW = 'steady'; }
+
+      let upside = '-', upLevel = 0;
+      if (p75 != null) {
+        const [pw, pl] = bandFor(p75, mc);
+        if (pl >= 2) { upside = 'may hit ' + pw; upLevel = pl; }
+      }
+      if (upLevel < 2 && mx != null) {
+        const [, ml] = bandFor(mx, mc);
+        if (ml >= 3) upside = 'spike possible';
+      }
+      const spread = (med && p75 != null && p25 != null) ? (p75 - p25) / med : 0;
+      const blowout = (med && mx) ? mx / med : 1;
+      const rainRisk = upLevel >= 2 || spread >= 0.5 || blowout >= 2.2;
+      if (rainRisk) score += 1;
+      score = Math.max(0, score);
+      const verdict = score <= 0 ? 'FISH' : (score <= 2 ? 'MARGINAL' : 'SKIP');
+      let conf;
+      if (horizon <= 2 && !rainRisk) conf = 'high';
+      else if (horizon <= 4 && !rainRisk) conf = 'med';
+      else conf = 'low';
+      return { verdict, conf, levelWord, trendW, upside };
+    }
+
+    // ─── BUILD PAYLOAD (same shape as Python's build_payload) ──────────────────
+    async function buildPayload(clim, series, rainData, nowGauges, pctiles) {
+      const todayStr = isoDate(today());
+      const months = clim.months;
+      const { perPoint, basinAvg, times } = rainData;
+
+      // antecedent wetness
+      const ant5Start = isoDate(addDays(today(), -5));
+      let ant = 0;
+      for (const [d, v] of Object.entries(basinAvg)) {
+        if (d >= ant5Start && d < todayStr) ant += v;
+      }
+      const antWord = ant > 25 ? 'WET - rain primes runoff' : (ant > 8 ? 'normal' : 'dry');
+
+      // now cards
+      const nowCards = [];
+      for (const [site, info] of Object.entries(USGS_SITES)) {
+        if (!nowGauges[site]) continue;
+        const { cfs, pct } = nowGauges[site];
+        const pctl = pctiles[site] || '';
+        nowCards.push({
+          label: info.label, role: info.role, site,
+          cfs: Math.round(cfs), pct: Math.round(pct * 10) / 10,
+          trend: trendWord(pct), pctl,
+          watch: info.role === 'local' && (pct > 25 || pctl === 'HIGH'),
+          usgsUrl: `https://waterdata.usgs.gov/monitoring-location/${site}/`,
+        });
+      }
+
+      // by-date lookup
+      const byDate = {};
+      for (const r of series) byDate[r.date] = r;
+
+      // 7-day forecast
+      const fcast = [];
+      for (let h = 0; h < 7; h++) {
+        const d = isoDate(addDays(today(), h));
+        const r = byDate[d];
+        if (!r || r.median == null) continue;
+        const mc = months[parseInt(d.slice(5, 7))];
+        const prev = byDate[isoDate(addDays(today(), h - 1))];
+        const pctChange = (prev && prev.median) ? (r.median - prev.median) / prev.median * 100 : null;
+        const { verdict, conf, levelWord, trendW, upside } = classify(r.median, mc, pctChange, r.p25, r.p75, r.max, h);
+        const rmm = basinAvg[d] ?? 0;
+        fcast.push({
+          date: d, dayname: dayName(d),
+          q: Math.round(r.median), level: levelWord, trend: trendW,
+          rain: Math.round(rmm * 10) / 10, notable: rmm >= RAIN_NOTABLE,
+          upside, verdict, conf,
+        });
+      }
+
+      // outlook days 8-11
+      const outlook = [];
+      for (let h = 7; h < 11; h++) {
+        const d = isoDate(addDays(today(), h));
+        const r = byDate[d];
+        if (!r || r.median == null) continue;
+        const [lw] = bandFor(r.median, months[parseInt(d.slice(5, 7))]);
+        outlook.push({ date: d, dayname: dayName(d), q: Math.round(r.median), level: lw });
+      }
+
+      // headline
+      const best = fcast.filter(f => f.verdict === 'FISH');
+      const avoid = fcast.filter(f => f.verdict === 'SKIP');
+      const rainWatch = [];
+      for (const [d, v] of Object.entries(basinAvg)) {
+        if (d >= todayStr && v >= RAIN_NOTABLE) {
+          const arrive = addDays(new Date(d + 'T12:00:00'), PULSE_LAG);
+          rainWatch.push({
+            mm: Math.round(v), date: d,
+            arrive: arrive.toLocaleDateString('en-US', { weekday: 'short', month: '2-digit', day: '2-digit' }),
+            wet: ant > 25,
+          });
+        }
+      }
+
+      // discharge chart data
+      const discharge = series.map(r => {
+        const mc = months[parseInt(r.date.slice(5, 7))];
+        return {
+          date: r.date, median: r.median, p25: r.p25, p75: r.p75, max: r.max,
+          clim_p50: Math.round(mc.p50), clim_p90: Math.round(mc.p90),
+          past: r.date < todayStr,
+        };
+      });
+      const todayIndex = discharge.findIndex(r => r.date === todayStr);
+
+      // rain chart data
+      const rainRows = times.map(dte => ({
+        date: dte,
+        points: Object.fromEntries(BASIN_POINTS.map(bp => [bp.name, Math.round((perPoint[bp.name][dte] ?? 0) * 10) / 10])),
+        basinAvg: Math.round((basinAvg[dte] ?? 0) * 10) / 10,
+        past: dte < todayStr,
+      }));
+      const rainTodayIndex = times.indexOf(todayStr);
+
+      const now = new Date();
+      const generated = now.toLocaleString('en-US', {
+        weekday: 'long', month: 'short', day: 'numeric', year: 'numeric',
+        hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
+      });
+
+      return {
+        generated,
+        now: nowCards,
+        antecedent: { mm: Math.round(ant), word: antWord },
+        forecast: fcast, outlook,
+        headline: { best, avoid, rainWatch },
+        discharge, todayIndex,
+        rain: rainRows, rainTodayIndex,
+        basinPoints: BASIN_POINTS,
+      };
+    }
+
+    // ─── CHARTS (dashboard) ────────────────────────────────────────────────────
+    let dischargeChart = null, rainChartObj = null;
+
+    const todayLinePlugin = {
+      id: 'todayLine',
+      afterDraw(chart) {
+        const idx = chart.options.plugins.todayLine?.idx;
+        if (idx == null) return;
+        const labels = chart.data.labels;
+        if (!labels || idx >= labels.length) return;
+        const x = chart.scales.x.getPixelForValue(labels[idx]);
+        const { top, bottom } = chart.chartArea;
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,.35)';
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, bottom); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = 'rgba(255,255,255,.6)';
+        ctx.font = '11px Inter';
+        ctx.fillText('today', x + 5, top + 13);
+        ctx.restore();
+      }
+    };
+
+    function buildCharts(payload) {
+      if (dischargeChart) { dischargeChart.destroy(); dischargeChart = null; }
+      if (rainChartObj) { rainChartObj.destroy(); rainChartObj = null; }
+
+      Chart.defaults.color = '#90a3bd';
+      Chart.defaults.font.family = 'Inter';
+      const gridc = 'rgba(255,255,255,.06)';
+
+      const d = payload.discharge;
+      const dl = d.map(r => r.date.slice(5));
+      dischargeChart = new Chart(document.getElementById('dischargeChart'), {
+        type: 'line',
+        data: {
+          labels: dl,
+          datasets: [
+            { label: 'p25', data: d.map(r => r.p25), borderColor: 'transparent', pointRadius: 0, fill: false },
+            {
+              label: 'p25-p75 range', data: d.map(r => r.p75), borderColor: 'transparent', pointRadius: 0,
+              backgroundColor: 'rgba(56,189,248,.18)', fill: '-1'
+            },
+            {
+              label: 'Worst-case (max)', data: d.map(r => r.max), borderColor: '#fb7185', borderWidth: 1,
+              borderDash: [3, 3], pointRadius: 0, fill: false
+            },
+            {
+              label: 'Median', data: d.map(r => r.median), borderColor: '#38bdf8', borderWidth: 2.5,
+              pointRadius: 0, tension: .3, fill: false
+            },
+            {
+              label: 'Normal (p50)', data: d.map(r => r.clim_p50), borderColor: '#94a3b8', borderWidth: 1,
+              borderDash: [6, 4], pointRadius: 0, fill: false
+            },
+            {
+              label: 'High (p90)', data: d.map(r => r.clim_p90), borderColor: '#f59e0b', borderWidth: 1,
+              borderDash: [6, 4], pointRadius: 0, fill: false
+            },
+          ],
+        },
+        options: {
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            todayLine: { idx: payload.todayIndex },
+            tooltip: { callbacks: { label: c => c.dataset.label + ': ' + Math.round(c.parsed.y) + ' m³/s' } },
+          },
+          scales: {
+            x: { grid: { color: gridc } },
+            y: { grid: { color: gridc }, title: { display: true, text: 'm³/s' } },
+          },
+        },
+        plugins: [todayLinePlugin],
+      });
+
+      const r = payload.rain;
+      const rl = r.map(x => x.date.slice(5));
+      const bpNames = BASIN_POINTS.map(b => b.name);
+      const cols = ['#38bdf8', '#34d399', '#a78bfa', '#f59e0b'];
+      rainChartObj = new Chart(document.getElementById('rainChart'), {
+        type: 'bar',
+        data: {
+          labels: rl,
+          datasets: bpNames.map((n, i) => ({
+            label: n,
+            data: r.map(x => x.points[n]),
+            backgroundColor: cols[i % cols.length],
+            stack: 's', borderRadius: 3,
+          })),
+        },
+        options: {
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12 } },
+            todayLine: { idx: payload.rainTodayIndex },
+            tooltip: { mode: 'index' },
+          },
+          scales: {
+            x: { stacked: true, grid: { color: gridc } },
+            y: { stacked: true, grid: { color: gridc }, title: { display: true, text: 'mm / day' } },
+          },
+        },
+        plugins: [todayLinePlugin],
+      });
+    }
+
+    // ─── RENDER DASHBOARD ──────────────────────────────────────────────────────
+    function renderAll(payload, climInfo) {
+      document.getElementById('gen').textContent = payload.generated;
+
+      // hero
+      const h = payload.headline;
+      const best = h.best.map(f => f.dayname + ' ' + f.date.slice(5)).join(', ') || 'none clearly clean this week';
+      const avoid = h.avoid.map(f => f.dayname + ' ' + f.date.slice(5)).join(', ') || 'none';
+      let rw = '';
+      if (h.rainWatch.length) {
+        const rw0 = h.rainWatch[0];
+        rw = `<div><div class="big">Rain watch</div><div class="val">${rw0.mm} mm → pulse ~${rw0.arrive}</div></div>`;
+      }
+      document.getElementById('hero').innerHTML =
+        `<div><div class="big">Preferable Conditions</div><div class="val" style="color:#5ee398">${best}</div></div>` +
+        `<div><div class="big">Avoid</div><div class="val" style="color:#fb7185">${avoid}</div></div>` + rw;
+
+      // forecast cards
+      document.getElementById('fcards').innerHTML = payload.forecast.map(f => {
+        const rp = f.rain > 0 ? `<div class="rainpill ${f.notable ? 'hot' : ''}">🌧 ${f.rain} mm</div>` : '';
+        const up = (f.upside && f.upside !== '-') ? `<div class="fmeta">if it rains: <b>${f.upside}</b></div>` : '';
+        return `<div class="card fcard">
+      <div class="day">${f.dayname}</div><div class="date">${f.date.slice(5)}</div>
+      <div class="badge v-${f.verdict}">${f.verdict}</div>
+      <div class="conf">${f.conf} conf</div>
+      <div class="fmeta"><b>${f.q}</b> m³/s<br>${f.level} · ${f.trend}</div>
+      ${rp}${up}</div>`;
+      }).join('');
+
+      // outlook
+      document.getElementById('outlook').innerHTML = payload.outlook.map(o =>
+        `<div class="outchip"><b>${o.dayname} ${o.date.slice(5)}</b>${o.q} m³/s · ${o.level}</div>`
+      ).join('') || '<span class="note">No extended outlook available.</span>';
+
+      // gauges — name now links to the in-page #gauge/SITE detail view
+      document.getElementById('gauges').innerHTML = payload.now.map(g => {
+        const dir = g.pct > 5 ? 'up' : (g.pct < -5 ? 'dn' : '');
+        const arrow = g.pct > 5 ? '▲' : (g.pct < -5 ? '▼' : '▬');
+        return `<div class="card gauge">
+      <div class="lbl"><a class="glink" href="#gauge/${g.site}">${g.label} <span style="opacity:.55">📈</span></a></div>
+      <div class="num">${g.cfs.toLocaleString()} <span class="unit">cfs</span></div>
+      <span class="tag ${dir}">${arrow} ${g.trend} (${g.pct > 0 ? '+' : ''}${g.pct}%/24h)</span>
+      <span class="tag">${g.pctl || '—'}</span>
+      ${g.watch ? '<div class="watch">⚠ local creek up — nearshore mud risk</div>' : ''}
+    </div>`;
+      }).join('');
+
+      // antecedent
+      const a = payload.antecedent;
+      const col = a.mm > 25 ? '#fb7185' : (a.mm > 8 ? '#fbbf52' : '#5ee398');
+      document.getElementById('antcard').innerHTML =
+        `<div class="ant"><span class="dot" style="background:${col}"></span>
+     <span>Last 5 days of upstream basin rain: <b>${a.mm} mm</b> → <b style="color:${col}">${a.word}</b></span></div>
      <p class="note" style="margin:10px 0 0">Wet ground makes the next rain run off faster and dirtier.</p>`;
-})();
 
-/* ---- rain watch + basins ---- */
-document.getElementById('rainwatch').innerHTML = DATA.headline.rain_watch.length
-  ? DATA.headline.rain_watch.map(r=>`&#127783; <b style="color:var(--txt)">${r.mm} mm</b> basin rain ~${r.date.slice(5)}
-     &rarr; expect a discharge pulse at Toronto <b style="color:var(--txt)">~${r.arrive}</b>
-     ${r.wet?'<span style="color:#fb7185">(worse &mdash; ground already wet)</span>':''}`).join('<br><br>')
-  : 'No notable rain (&ge;'+DATA.notable_mm+' mm) in the upstream basin this week.';
-document.getElementById('basinlist').innerHTML = DATA.basin_points.map(b=>
-  `<div class="bp"><span>${b.name}</span><span class="co">${b.lat}, ${b.lon}</span></div>`).join('');
+      // rain watch + basins
+      document.getElementById('rainwatch').innerHTML = payload.headline.rainWatch.length
+        ? payload.headline.rainWatch.map(r =>
+          `🌧 <b style="color:var(--txt)">${r.mm} mm</b> basin rain ~${r.date.slice(5)}` +
+          ` → expect a discharge pulse at Toronto <b style="color:var(--txt)">~${r.arrive}</b>` +
+          (r.wet ? ' <span style="color:#fb7185">(worse — ground already wet)</span>' : '')
+        ).join('<br><br>')
+        : `No notable rain (≥${RAIN_NOTABLE} mm) in the upstream basin this week.`;
 
-/* ---- charts ---- */
-const gridc='rgba(255,255,255,.06)', txtc='#90a3bd';
-Chart.defaults.color=txtc; Chart.defaults.font.family='Inter';
+      document.getElementById('basinlist').innerHTML = BASIN_POINTS.map(b =>
+        `<div class="bp"><span>${b.name}</span><span class="co">${b.lat}, ${b.lon}</span></div>`
+      ).join('');
 
-const todayLine={id:'todayLine',afterDraw(c){
-  const idx=c.options.plugins.todayLine.idx; if(idx==null)return;
-  const labels=c.data.labels; if(!labels||idx>=labels.length)return;
-  const x=c.scales.x.getPixelForValue(labels[idx]); const {top,bottom}=c.chartArea;
-  const cx=c.ctx; cx.save(); cx.strokeStyle='rgba(255,255,255,.35)'; cx.setLineDash([4,4]); cx.lineWidth=1;
-  cx.beginPath(); cx.moveTo(x,top); cx.lineTo(x,bottom); cx.stroke();
-  cx.setLineDash([]); cx.fillStyle='rgba(255,255,255,.6)'; cx.font='11px Inter'; cx.fillText('today',x+5,top+13);
-  cx.restore();
-}};
+      // clim cache status
+      const cs = document.getElementById('clim-status');
+      if (climInfo.fromCache) {
+        cs.textContent = `Using cached 11-year baseline (${climInfo.ageDays} days old, refreshes every ${CLIM_MAX_DAYS} days). Cached in your browser's localStorage.`;
+      } else {
+        cs.textContent = `Just rebuilt the 11-year climatology baseline and cached it in your browser. Next rebuild in ~${CLIM_MAX_DAYS} days.`;
+      }
 
-const d=DATA.discharge, dl=d.map(r=>r.date.slice(5));
-new Chart(document.getElementById('dischargeChart'),{
-  type:'line',
-  data:{labels:dl,datasets:[
-    {label:'p25',data:d.map(r=>r.p25),borderColor:'transparent',pointRadius:0,fill:false},
-    {label:'p25-p75 range',data:d.map(r=>r.p75),borderColor:'transparent',pointRadius:0,
-      backgroundColor:'rgba(56,189,248,.18)',fill:'-1'},
-    {label:'Worst-case (max)',data:d.map(r=>r.max),borderColor:'#fb7185',borderWidth:1,
-      borderDash:[3,3],pointRadius:0,fill:false},
-    {label:'Median',data:d.map(r=>r.median),borderColor:'#38bdf8',borderWidth:2.5,
-      pointRadius:0,tension:.3,fill:false},
-    {label:'Normal (p50)',data:d.map(r=>r.clim_p50),borderColor:'#94a3b8',borderWidth:1,
-      borderDash:[6,4],pointRadius:0,fill:false},
-    {label:'High (p90)',data:d.map(r=>r.clim_p90),borderColor:'#f59e0b',borderWidth:1,
-      borderDash:[6,4],pointRadius:0,fill:false},
-  ]},
-  options:{maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
-    plugins:{legend:{display:false},todayLine:{idx:DATA.today_index},
-      tooltip:{callbacks:{label:c=>c.dataset.label+': '+Math.round(c.parsed.y)+' m³/s'}}},
-    scales:{x:{grid:{color:gridc}},y:{grid:{color:gridc},title:{display:true,text:'m³/s'}}}},
-  plugins:[todayLine]
-});
+      // charts
+      buildCharts(payload);
 
-const r=DATA.rain, rl=r.map(x=>x.date.slice(5));
-const bp=DATA.basin_points.map(b=>b.name);
-const cols=['#38bdf8','#34d399','#a78bfa','#f59e0b'];
-new Chart(document.getElementById('rainChart'),{
-  type:'bar',
-  data:{labels:rl,datasets:bp.map((n,i)=>({label:n,
-    data:r.map(x=>x.points[n]),backgroundColor:cols[i%cols.length],stack:'s',
-    borderRadius:3}))},
-  options:{maintainAspectRatio:false,
-    plugins:{legend:{position:'bottom',labels:{boxWidth:12}},todayLine:{idx:DATA.rain_today_index},
-      tooltip:{mode:'index'}},
-    scales:{x:{stacked:true,grid:{color:gridc}},
-      y:{stacked:true,grid:{color:gridc},title:{display:true,text:'mm / day'}}}},
-  plugins:[todayLine]
-});
+      // tabs
+      document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        document.getElementById('p-' + t.dataset.t).classList.add('active');
+      });
 
-/* ---- tabs ---- */
-document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
-  t.classList.add('active');
-  document.getElementById('p-'+t.dataset.t).classList.add('active');
-});
-</script>
-</body></html>
+      // refresh link
+      document.getElementById('refresh-link').onclick = e => { e.preventDefault(); location.reload(); };
+    }
+
+    // ─── GAUGE DETAIL VIEW (live, in-page) ─────────────────────────────────────
+    const historyCache = {};   // site -> resampled history (session cache)
+    let detailChart = null;
+
+    function renderGaugeChart(H) {
+      const statsEl = document.getElementById('d-stats');
+      const card = document.getElementById('d-card');
+
+      if (detailChart) { detailChart.destroy(); detailChart = null; }
+
+      if (!H.length) {
+        statsEl.innerHTML = '';
+        card.innerHTML = '<div class="empty">No USGS data available for this period.</div>';
+        return;
+      }
+
+      // (re)build the canvas each render so re-entry works after an error/empty state
+      card.innerHTML = '<div class="chartbox" style="height:420px"><canvas id="d-chart"></canvas></div>';
+
+      const qs = H.map(p => p.q), latest = H[H.length - 1];
+      const mn = Math.min(...qs), mx = Math.max(...qs);
+      const mnp = H.find(p => p.q === mn), mxp = H.find(p => p.q === mx);
+      statsEl.innerHTML =
+        `<div class="stat"><div class="k">Latest</div><div class="v">${latest.q.toLocaleString()}</div><div class="d">cfs · ${latest.t}</div></div>` +
+        `<div class="stat"><div class="k">3-mo low</div><div class="v">${mn.toLocaleString()}</div><div class="d">cfs · ${mnp.t}</div></div>` +
+        `<div class="stat"><div class="k">3-mo high</div><div class="v">${mx.toLocaleString()}</div><div class="d">cfs · ${mxp.t}</div></div>`;
+
+      const ctx = document.getElementById('d-chart');
+      const grad = ctx.getContext('2d').createLinearGradient(0, 0, 0, 420);
+      grad.addColorStop(0, 'rgba(56,189,248,.35)');
+      grad.addColorStop(1, 'rgba(56,189,248,0)');
+      Chart.defaults.color = '#90a3bd';
+      Chart.defaults.font.family = 'Inter';
+
+      const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const isMobile = window.innerWidth < 600;
+      // Mobile: first of each month only. Desktop: every 7th midnight.
+      const ticks = []; let dc = 0;
+      H.forEach((p, i) => {
+        if (p.t.slice(11) === '00:00') {
+          if (isMobile) { if (p.t.slice(8, 10) === '01') ticks.push(i); }
+          else { if (dc % 7 === 0) ticks.push(i); }
+          dc++;
+        }
+      });
+
+      detailChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: H.map(p => p.t),
+          datasets: [{
+            label: 'Discharge (cfs)', data: qs, borderColor: '#38bdf8', borderWidth: 2,
+            pointRadius: 0, tension: .25, fill: true, backgroundColor: grad
+          }]
+        },
+        options: {
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { title: i => H[i[0].dataIndex].t, label: c => c.parsed.y.toLocaleString() + ' cfs' } }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255,255,255,.06)' },
+              afterBuildTicks: a => { if (ticks.length) a.ticks = ticks.map(i => ({ value: i })); },
+              ticks: {
+                autoSkip: false, maxRotation: 0, minRotation: 0,
+                callback: v => {
+                  const s = (typeof v === 'number') ? (H[v] && H[v].t) : v;
+                  return s ? MON[+String(s).slice(5, 7) - 1] + (isMobile ? '' : ' ' + String(s).slice(8, 10)) : '';
+                }
+              }
+            },
+            y: { grid: { color: 'rgba(255,255,255,.06)' }, title: { display: true, text: 'cfs' } }
+          }
+        }
+      });
+    }
+
+    async function showGaugeDetail(site) {
+      const info = USGS_SITES[site];
+      if (!info) { location.hash = ''; return; }
+
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('detail').style.display = '';
+      window.scrollTo(0, 0);
+
+      document.getElementById('d-title').textContent = info.label;
+      document.getElementById('d-sub').textContent =
+        `USGS gauge ${site} · discharge (cfs), hourly · past 3 months · hover for any hour`;
+      document.getElementById('d-usgs').href =
+        `https://waterdata.usgs.gov/monitoring-location/USGS-${site}/`;
+
+      // loading state
+      if (detailChart) { detailChart.destroy(); detailChart = null; }
+      document.getElementById('d-stats').innerHTML = '';
+      document.getElementById('d-card').innerHTML =
+        '<div class="empty"><div class="spinner" style="margin:0 auto 14px"></div>Loading 3-month history…</div>';
+
+      let H = historyCache[site];
+      try {
+        if (!H) { H = await getUSGSHistory(site); historyCache[site] = H; }
+      } catch (e) {
+        document.getElementById('d-card').innerHTML =
+          `<div class="error-box">❌ Couldn't load history: ${e.message}<br><br>USGS may be busy — try again in a moment.</div>`;
+        return;
+      }
+      renderGaugeChart(H);
+    }
+
+    // ─── ROUTER ────────────────────────────────────────────────────────────────
+    function router() {
+      const m = location.hash.match(/^#gauge\/(\d+)$/);
+      if (m && USGS_SITES[m[1]]) {
+        showGaugeDetail(m[1]);
+      } else {
+        document.getElementById('detail').style.display = 'none';
+        // only reveal the dashboard once the loader is gone
+        if (document.getElementById('loader').style.display === 'none') {
+          document.getElementById('app').style.display = '';
+        }
+      }
+    }
+    window.addEventListener('hashchange', router);
+    document.getElementById('d-back').addEventListener('click', e => {
+      e.preventDefault();
+      location.hash = '';
+    });
+
+    // ─── MAIN ──────────────────────────────────────────────────────────────────
+    async function main() {
+      try {
+        // 1. Climatology (may be from cache)
+        stepActive('ls-clim');
+        const climInfo = await getClimatology();
+        stepDone('ls-clim');
+
+        // 2. GloFAS series
+        stepActive('ls-glofas');
+        const series = await getGloFASSeries(7, 14);
+        stepDone('ls-glofas');
+
+        // 3. Precipitation
+        stepActive('ls-rain');
+        const rainData = await getRainDetail(5, 14);
+        stepDone('ls-rain');
+
+        // 4. USGS live gauges + percentiles (parallel)
+        stepActive('ls-usgs');
+        const nowGauges = await getUSGSNow();
+        const pctileResults = await Promise.allSettled(
+          Object.keys(USGS_SITES).map(async site => {
+            if (!nowGauges[site]) return [site, ''];
+            const p = await getUSGSPercentile(site, nowGauges[site].cfs);
+            return [site, p];
+          })
+        );
+        const pctiles = {};
+        for (const r of pctileResults) {
+          if (r.status === 'fulfilled') pctiles[r.value[0]] = r.value[1];
+        }
+        stepDone('ls-usgs');
+
+        // 5. Build payload + render
+        stepActive('ls-render');
+        const payload = await buildPayload(climInfo.clim, series, rainData, nowGauges, pctiles);
+        stepDone('ls-render');
+
+        // Show app
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('app').style.display = '';
+        renderAll(payload, climInfo);
+
+        // Honor any #gauge/SITE hash present at load time
+        router();
+
+      } catch (err) {
+        document.querySelector('.loader-label').textContent = 'Error loading data';
+        document.querySelector('.loader-steps').innerHTML =
+          `<div class="error-box">❌ ${err.message}<br><br>
+       Check your internet connection and try refreshing.<br>
+       Some APIs may be temporarily unavailable.</div>
+       <div style="margin-top:12px"><a href="" style="color:#38bdf8">↺ Retry</a></div>`;
+        console.error(err);
+      }
+    }
+
+    main();
+  </script>
+</body>
+
+</html>
