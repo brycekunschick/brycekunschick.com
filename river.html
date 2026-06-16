@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0a0f1c">
+  <meta name="theme-color" content="#11203a">
   <title>Ohio River @ Toronto — Fishing Forecast</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -30,7 +30,7 @@
     }
 
     html {
-      background: #0a0f1c;
+      background: #0a0f1c radial-gradient(1200px 700px at 75% -15%, #16294b 0%, #0a0f1c 55%) fixed;
     }
 
     body {
@@ -831,9 +831,9 @@
     const HISTORY_STEP_HOURS = 1; // resample bucket size
 
     const USGS_SITES = {
-      '03086000': { label: 'Ohio R @ Sewickley (mainstem, ~1-2 day lead)', role: 'lead' },
-      '03107500': { label: 'Beaver R @ Beaver Falls (tributary)', role: 'trib' },
-      '03109500': { label: 'Little Beaver Ck @ E.Liverpool (LOCAL mud)', role: 'local' },
+      '03086000': { label: 'Ohio R @ Sewickley', role: 'lead' },
+      '03107500': { label: 'Beaver R @ Beaver Falls', role: 'trib' },
+      '03109500': { label: 'Little Beaver Ck @ E.Liverpool', role: 'local' },
     };
 
     const BASIN_POINTS = [
@@ -1455,8 +1455,8 @@
       const dayStarts = [];
       D.forEach((p, i) => { if (p.t.slice(11) === '00:00') dayStarts.push(i); });
       if (tf === '1W') {
-        // a label every day
-        return { idxs: dayStarts, labeller: i => fmtMD(D[i].t) };
+        // a label every other day
+        return { idxs: dayStarts.filter((_, k) => k % 2 === 0), labeller: i => fmtMD(D[i].t) };
       }
       if (tf === '1M') {
         // the date at the start of each week
@@ -1552,7 +1552,7 @@
 
       document.getElementById('d-title').textContent = info.label;
       document.getElementById('d-sub').textContent =
-        `USGS gauge ${site} · discharge (cfs), hourly · hover for any hour`;
+        `USGS gauge ${site} · discharge (cfs), hourly`;
       document.getElementById('d-usgs').href =
         `https://waterdata.usgs.gov/monitoring-location/USGS-${site}/`;
 
