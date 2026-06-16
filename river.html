@@ -277,21 +277,34 @@
     }
 
     /* gauge cards */
+    .gauge {
+      position: relative;
+      padding-bottom: 60px;
+    }
+
     .gauge .lbl {
       font-size: 13px;
       color: var(--muted);
     }
 
-    .gauge .lbl a.glink {
-      color: inherit;
+    .gauge .view-graph {
+      position: absolute;
+      left: 18px;
+      bottom: 18px;
+      display: inline-block;
+      border: 1px solid var(--accent);
+      background: transparent;
+      color: var(--accent);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
       text-decoration: none;
-      border-bottom: 1px dashed rgba(255, 255, 255, .22);
-      cursor: pointer;
+      transition: .15s;
     }
 
-    .gauge .lbl a.glink:hover {
-      color: var(--accent);
-      border-color: var(--accent);
+    .gauge .view-graph:hover {
+      background: rgba(56, 189, 248, .12);
     }
 
     .gauge .num {
@@ -702,11 +715,8 @@
     <div class="panel" id="p-now">
       <div class="grid g3" id="gauges"></div>
       <p class="note" style="margin-top:18px">
-        These gauges are the ground truth right now — the river's live flow already contains
-        every drop of past rain. Watch the LOCAL creek: it can muddy your bank even when the
-        mainstem reads clean.<br><br>
-        <b style="color:var(--txt)">Tip:</b> click a gauge name for its full 3-month history chart.
-        Discharge matters, not height — the lock-and-dams regulate height, not flow.
+        These are the USGS gauges closest to Toronto, OH. Values are observed flow, in cubic
+        feet per second (cfs), collected in real time.
       </p>
     </div>
 
@@ -794,8 +804,7 @@
        padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;text-decoration:none">
         📊 USGS Gauge</a>
     </div>
-    <p class="foot">Data: USGS NWIS · GloFAS/ECMWF via Open-Meteo · Open-Meteo precip.
-      Climatology cached locally for ~200 days. &nbsp; Tight lines. 🎣</p>
+    <p class="foot">Data: USGS NWIS · GloFAS/ECMWF via Open-Meteo</p>
   </div>
 
   <!-- ===== GAUGE DETAIL VIEW (in-page, live-fetched) ===== -->
@@ -815,7 +824,7 @@
     <div style="margin-top:18px">
       <a class="btn" id="d-usgs" href="#" target="_blank" rel="noopener">View live data on USGS &#8599;</a>
     </div>
-    <p class="foot">Source: USGS NWIS instantaneous values, resampled hourly. 🎣</p>
+    <p class="foot">Data: USGS NWIS</p>
   </div>
 
   <script>
@@ -833,7 +842,7 @@
     const USGS_SITES = {
       '03086000': { label: 'Ohio R @ Sewickley', role: 'lead' },
       '03107500': { label: 'Beaver R @ Beaver Falls', role: 'trib' },
-      '03109500': { label: 'Little Beaver Ck @ E.Liverpool', role: 'local' },
+      '03109500': { label: 'Little Beaver Ck @ E.Liverpool (local tributary)', role: 'local' },
     };
 
     const BASIN_POINTS = [
@@ -1383,16 +1392,17 @@
         `<div class="outchip"><b>${o.dayname} ${o.date.slice(5)}</b>${o.q} m³/s · ${o.level}</div>`
       ).join('') || '<span class="note">No extended outlook available.</span>';
 
-      // gauges — name now links to the in-page #gauge/SITE detail view
+      // gauges — each card has a "View Graph" button to the in-page #gauge/SITE detail view
       document.getElementById('gauges').innerHTML = payload.now.map(g => {
         const dir = g.pct > 5 ? 'up' : (g.pct < -5 ? 'dn' : '');
         const arrow = g.pct > 5 ? '▲' : (g.pct < -5 ? '▼' : '▬');
         return `<div class="card gauge">
-      <div class="lbl"><a class="glink" href="#gauge/${g.site}">${g.label} <span style="opacity:.55">📈</span></a></div>
+      <div class="lbl">${g.label}</div>
       <div class="num">${g.cfs.toLocaleString()} <span class="unit">cfs</span></div>
       <span class="tag ${dir}">${arrow} ${g.trend} (${g.pct > 0 ? '+' : ''}${g.pct}%/24h)</span>
       <span class="tag">${g.pctl || '—'}</span>
       ${g.watch ? '<div class="watch">⚠ local creek up</div>' : ''}
+      <a class="view-graph" href="#gauge/${g.site}">View Graph</a>
     </div>`;
       }).join('');
 
