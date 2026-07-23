@@ -93,7 +93,6 @@
     .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
     .title { font-size: clamp(27px, 4vw, 38px); font-weight: 800; letter-spacing: -.02em; color: var(--deep); }
     .title .thin { color: var(--blue); }
-    .sub { color: var(--muted); font-size: 14px; margin-top: 5px; }
     .home-link { font-size: 13px; color: var(--faint); font-weight: 500; }
 
     /* ── hero verdict ───────────────────────────────────── */
@@ -116,25 +115,15 @@
       box-shadow: var(--shadow-lg);
     }
     .verdict-pill.v0 { background: linear-gradient(120deg, #059669, #10b981); }
-    .verdict-pill.v1 { background: linear-gradient(120deg, #0d9488, #14b8a6); }
-    .verdict-pill.v2 { background: linear-gradient(120deg, #d97706, #f59e0b); }
-    .verdict-pill.v3 { background: linear-gradient(120deg, #dc2626, #ef4444); }
+    .verdict-pill.v1 { background: linear-gradient(120deg, #d97706, #f59e0b); }
+    .verdict-pill.v2 { background: linear-gradient(120deg, #dc2626, #ef4444); }
     .pulse-dot { position: relative; width: 11px; height: 11px; border-radius: 50%; background: #fff; flex: none; }
     .pulse-dot::after {
       content: ''; position: absolute; inset: -6px; border-radius: 50%;
       border: 2px solid rgba(255, 255, 255, .8); animation: rip 1.9s ease-out infinite;
     }
     .hero-text h2 { font-size: clamp(17px, 2.4vw, 21px); font-weight: 700; color: var(--deep); }
-    .hero-text p { color: var(--muted); font-size: 14px; margin-top: 5px; max-width: 640px; line-height: 1.55; }
-    .notes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-    .note {
-      font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 999px;
-      background: rgba(255, 255, 255, .85); border: 1px solid #d8e8fa; color: var(--deep);
-      backdrop-filter: blur(3px);
-    }
-    .note.warn { border-color: #fcd9a8; background: #fff7ea; color: #92500a; }
-    .note.danger { border-color: #f6c1c1; background: #fdf0f0; color: #9c1c1c; }
-    .note.ok { border-color: #b8e6cf; background: #effaf4; color: #0b6b47; }
+    .hero-text p { color: var(--muted); font-size: 14px; margin-top: 5px; max-width: 680px; line-height: 1.6; }
     .updated { font-size: 12px; color: var(--faint); margin-top: 14px; }
 
     /* ── stat cards ─────────────────────────────────────── */
@@ -250,7 +239,6 @@
     <div class="top reveal">
       <div>
         <div class="title">Cheat Lake <span class="thin">· Conditions</span></div>
-        <div class="sub">Cheat River watershed → Lake Lynn pool · live gauges + NWS inflow forecast</div>
       </div>
       <a class="home-link" href="index.html">← brycekunschick.com</a>
     </div>
@@ -270,7 +258,6 @@
           <p id="vsub"></p>
         </div>
       </div>
-      <div class="notes" id="vnotes" style="position:relative;z-index:1"></div>
       <div class="updated" id="updated" style="position:relative;z-index:1"></div>
     </div>
 
@@ -310,7 +297,7 @@
         </div>
       </div>
       <div class="chart-box"><canvas id="flowChart"></canvas></div>
-      <div class="legend-note">● green / red dots = <b>your logged trips</b> · dashed = NWS forecast (5-day horizon) · shaded bands: <b>green</b> &lt;1.2k prime · <b>teal</b> &lt;3k good · <b>amber</b> &lt;7k marginal · <b>red</b> blown out</div>
+      <div class="legend-note">● green / red dots = <b>your logged trips</b> · dashed = NWS forecast (5-day horizon) · verdict thresholds: <b>&lt;3k</b> good · <b>3–7k</b> caution · <b>&gt;7k</b> blown out</div>
     </div>
 
     <!-- rain chart -->
@@ -400,12 +387,11 @@
 
     // verdict bands on lag-adjusted inflow (cfs) — calibrated against the trips below
     const BANDS = [
-      { max: 1200, level: 0, word: 'PRIME', head: 'Clear water, gentle current — go.' },
-      { max: 3000, level: 1, word: 'GOOD', head: 'Fishable — light stain or extra current possible.' },
-      { max: 7000, level: 2, word: 'MARGINAL', head: 'Stained and pushing — fish coves and edges.' },
-      { max: Infinity, level: 3, word: 'BLOWN OUT', head: 'High, muddy, debris — stay home.' },
+      { max: 3000, level: 0, word: 'GOOD', head: 'Fishable — clear to lightly stained, normal current.' },
+      { max: 7000, level: 1, word: 'CAUTION', head: 'Stained and pushing — fish coves and edges.' },
+      { max: Infinity, level: 2, word: 'BLOWN OUT', head: 'High, muddy, debris — stay home.' },
     ];
-    const LEVEL_COLOR = ['#059669', '#0d9488', '#d97706', '#dc2626'];
+    const LEVEL_COLOR = ['#059669', '#d97706', '#dc2626'];
     const DEBRIS_PEAK = 12000;   // cfs — a pulse this size leaves logs in the lake for days
     const FISHABLE_CFS = 3000;   // recovery threshold used for the "fishable again" estimate
 
@@ -663,41 +649,33 @@
 
       let band = bandFor(lagged ?? 0);
       let level = band.level;
-      const notes = [];
+      const extra = []; // prose sentences appended to the hero summary, most important first
 
-      if (peak > DEBRIS_PEAK && peakAgeH != null) {
-        if (peakAgeH < 48) { level = 3; notes.push(['danger', `⚠️ ${fmtNum(peak)} cfs peak just ${Math.round(peakAgeH)} h ago — mud & debris in the lake`]); }
-        else if (peakAgeH < 96) { level = Math.max(level, 2); notes.push(['warn', `🪵 Debris likely — ${fmtNum(peak)} cfs peak ${Math.round(peakAgeH / 24)} d ago`]); }
+      if (peak > DEBRIS_PEAK && peakAgeH != null && peakAgeH < 96) {
+        if (peakAgeH < 48) level = 2; else level = Math.max(level, 1);
+        const ageTxt = peakAgeH < 48 ? `${Math.round(peakAgeH)} h` : `${Math.round(peakAgeH / 24)} days`;
+        extra.push(`A ${fmtNum(peak)} cfs peak passed ${ageTxt} ago — mud and floating debris linger.`);
       }
-      if (rising > 2 && level < 2) {
-        notes.push(['warn', `📈 Fresh pulse passing Albright now — window closes in ~12–24 h`]);
-      } else if (rising < 0.8 && level >= 2) {
-        notes.push(['ok', `📉 Falling — clearing from the top of the lake down`]);
-      }
-      if (rain48 != null && rain48 > 1.5) notes.push(['warn', `🌧️ ${rain48.toFixed(1)}″ basin rain in 48 h — rise coming`]);
-
-      const elev = latestOf(iv, LAKE_SITE, '62614');
-      if (elev && elev[1] > 870.3) notes.push(['warn', `🌊 Pool high (${elev[1].toFixed(1)} ft) — dam moving a lot of water`]);
 
       // recovery estimate off the NWS forecast
-      let recovery = null;
-      if (level >= 2 && pmaw2?.fc?.length) {
+      if (level >= 1 && pmaw2?.fc?.length) {
         const hit = pmaw2.fc.find(p => p.cfs < FISHABLE_CFS);
         if (hit) {
           const eta = new Date(hit.t.getTime() + 18 * 3600e3); // + push-down lag
-          recovery = eta.toLocaleDateString([], { weekday: 'long' });
-          notes.push(['ok', `🎣 NWS model: fishable again ~${recovery}`]);
+          extra.push(`NWS model says fishable again ~${eta.toLocaleDateString([], { weekday: 'long' })}.`);
         } else {
-          notes.push(['warn', `⏳ Not forecast to drop below ${fmtNum(FISHABLE_CFS)} cfs within 5 days`]);
+          extra.push(`Not forecast to drop below ${fmtNum(FISHABLE_CFS)} cfs within 5 days.`);
         }
       }
-      if (level < 2 && rainFC?.length) {
+      if (rising > 2 && level === 0) extra.push('A fresh pulse is passing Albright now — the window closes in ~12–24 h.');
+      if (rain48 != null && rain48 > 1.5) extra.push(`${rain48.toFixed(1)}″ of basin rain in the last 48 h — a rise is coming.`);
+      if (level === 0 && rainFC?.length) {
         const soon = rainFC.slice(0, 3).reduce((a, d) => a + d.rain, 0);
-        if (soon > 1.5) notes.push(['warn', `🌦️ ${soon.toFixed(1)}″ forecast next 3 days — go sooner, not later`]);
+        if (soon > 1.5) extra.push(`${soon.toFixed(1)}″ forecast over the next 3 days — go sooner, not later.`);
       }
 
       const final = BANDS.find(b => b.level === level) ?? band;
-      return { level, word: final.word, head: level === band.level ? band.head : final.head, notes, lagged, latest, rising, peak, peakAgeH, rain48 };
+      return { level, word: final.word, head: final.head, extra: extra.slice(0, 2), lagged, latest, rising, peak, peakAgeH, rain48 };
     }
 
     // ─── RENDER: hero + stats ──────────────────────────────────────────────────
@@ -711,9 +689,8 @@
       const bits = [];
       if (v.lagged != null) bits.push(`Water now in the main lake passed Albright at ~${fmtNum(v.lagged)} cfs.`);
       if (v.latest != null) bits.push(`Current inflow ${fmtNum(v.latest)} cfs (${v.rising >= 1.05 ? 'rising' : v.rising <= 0.95 ? 'falling' : 'steady'}).`);
+      bits.push(...v.extra);
       $('vsub').textContent = bits.join(' ');
-
-      $('vnotes').innerHTML = v.notes.map(([cls, txt]) => `<span class="note ${cls}">${txt}</span>`).join('');
       const iss = state.pmaw2?.issued ? new Date(state.pmaw2.issued).toLocaleString([], { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : null;
       $('updated').textContent = `Updated ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` + (iss ? ` · NWS forecast issued ${iss}` : '');
     }
@@ -772,11 +749,11 @@
         if (flows?.length) {
           const mean = flows.reduce((a, b) => a + b, 0) / flows.length;
           level = bandFor(mean).level;
-          if (debrisCarry && i < 2) level = Math.max(level, 2);
+          if (debrisCarry && i < 2) level = Math.max(level, 1);
           txt = `${fmtNum(mean)} cfs`;
           if (mean > DEBRIS_PEAK) debrisCarry = true;
         } else if (rain) {
-          level = rain.rain >= 1.5 ? 3 : rain.rain >= 0.75 ? 2 : rain.rain >= 0.3 ? 1 : 0;
+          level = rain.rain >= 1.5 ? 2 : rain.rain >= 0.75 ? 1 : 0;
           txt = 'rain-based';
         }
         const rainTxt = rain ? `${rain.rain.toFixed(rain.rain >= 1 ? 1 : 2)}″ · ${rain.prob}%` : '';
