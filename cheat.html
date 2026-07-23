@@ -206,7 +206,7 @@
     .gauge .gv { font-size: 21px; font-weight: 800; color: var(--blue); margin-top: 7px; }
     .gauge .gv small { font-size: 12px; font-weight: 600; color: var(--faint); }
     .gauge .gd { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
-    .gauge canvas { width: 100%; height: 38px; margin-top: 8px; }
+    .spark-box { position: relative; height: 38px; margin-top: 8px; }
     .gauge .gl { font-size: 11px; margin-top: 6px; display: inline-block; }
 
     /* ── trips ──────────────────────────────────────────── */
@@ -446,8 +446,10 @@
 
     function countUp(el, target, decimals = 0, dur = 800) {
       if (target == null || isNaN(target)) { el.textContent = '—'; return; }
-      const t0 = performance.now();
       const fmt = v => decimals ? v.toFixed(decimals) : Math.round(v).toLocaleString();
+      el.textContent = fmt(target); // final value first — animation is a bonus on top
+      if (document.hidden || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const t0 = performance.now();
       function tick(t) {
         const p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3);
         el.textContent = fmt(target * e);
@@ -836,7 +838,8 @@
             fcast.push(byDay[d].reduce((a, b) => a + b, 0) / byDay[d].length);
           }
         }
-        if (lastHistIdx >= 0 && fcast.length > keys.indexOf(keys[lastHistIdx + 1] ?? '')) fcast[lastHistIdx] = hist[lastHistIdx]; // visually connect
+        if (lastHistIdx >= 0 && fcast.length > lastHistIdx + 1) fcast[lastHistIdx] = hist[lastHistIdx]; // visually connect
+
       }
 
       // trip markers
@@ -1012,7 +1015,7 @@
           <div class="gn">${SITES[site].name}</div><div class="gr">${SITES[site].role}</div>
           <div class="gv">${cur ? (isLake ? cur[1].toFixed(1) : fmtNum(cur[1])) : '—'} <small>${isLake ? 'ft' : 'cfs'}</small></div>
           <div class="gd">${delta}</div>
-          <canvas id="spark-${site}"></canvas>
+          <div class="spark-box"><canvas id="spark-${site}"></canvas></div>
           <a class="gl" href="https://waterdata.usgs.gov/monitoring-location/${usgsId}/" target="_blank">USGS ${site} ↗</a>
         </div>`;
       }).join('');
