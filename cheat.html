@@ -160,6 +160,8 @@
     /* ── charts ─────────────────────────────────────────── */
     .chart-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
     .pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .pills.stack { flex-direction: column; align-items: flex-end; }
+    .pill-row { display: flex; gap: 6px; }
     .pill {
       font-family: inherit; font-size: 12.5px; font-weight: 600; color: var(--muted);
       background: #f0f5fb; border: 1px solid var(--line); border-radius: 999px;
@@ -167,19 +169,12 @@
     }
     .pill:hover { border-color: var(--sky); color: var(--blue); }
     .pill.on { background: var(--blue); border-color: var(--blue); color: #fff; box-shadow: 0 4px 12px rgba(29, 111, 224, .3); }
-    .chart-box { position: relative; height: 340px; margin-top: 16px; }
+    .pill.on.fwd, .pill.fwd.on { background: var(--sky); border-color: var(--sky); box-shadow: 0 4px 12px rgba(56, 189, 248, .35); }
+    .chart-box { position: relative; height: 340px; margin-top: 16px; overflow: hidden; }
     .chart-box.short { height: 240px; }
+    .chart-box canvas { max-width: 100%; }
     .legend-note { font-size: 11.5px; color: var(--faint); margin-top: 10px; }
     .legend-note b { color: var(--muted); }
-
-    /* ── flow path strip ────────────────────────────────── */
-    .flowpath { display: flex; align-items: stretch; gap: 0; margin-top: 16px; flex-wrap: wrap; }
-    .fp-node { flex: 1 1 130px; text-align: center; padding: 12px 8px; position: relative; }
-    .fp-node .ic { font-size: 21px; }
-    .fp-node .nm { font-size: 13px; font-weight: 700; color: var(--deep); margin-top: 5px; }
-    .fp-node .tm { font-size: 11.5px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
-    .fp-arrow { display: flex; align-items: center; color: var(--sky); font-size: 17px; padding: 0 2px; }
-    .fp-note { font-size: 12.5px; color: var(--muted); margin-top: 12px; padding: 11px 14px; background: #f2f8ff; border-radius: 12px; border: 1px solid #ddebfa; line-height: 1.55; }
 
     /* ── gauges grid ────────────────────────────────────── */
     .gauges { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
@@ -193,7 +188,8 @@
     .gauge .gv { font-size: 21px; font-weight: 800; color: var(--blue); margin-top: 7px; }
     .gauge .gv small { font-size: 12px; font-weight: 600; color: var(--faint); }
     .gauge .gd { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
-    .spark-box { position: relative; height: 38px; margin-top: 8px; }
+    .spark-box { position: relative; height: 38px; margin-top: 8px; overflow: hidden; }
+    .spark-box canvas { width: 100% !important; height: 100% !important; }
     .gauge .gl { font-size: 11px; margin-top: 6px; display: inline-block; }
 
     /* ── trips ──────────────────────────────────────────── */
@@ -207,8 +203,8 @@
 
     @media (max-width: 560px) {
       .chart-box { height: 270px; }
-      .fp-arrow { display: none; }
-      .fp-node { flex-basis: 46%; }
+      .legend-note .thresh { display: block; margin-top: 3px; }
+      .legend-note .sep { display: none; }
       .stats { gap: 9px; }
       .stat { padding: 13px 11px 11px; border-radius: 14px; }
       .stat .k { font-size: 10px; letter-spacing: .04em; }
@@ -267,7 +263,6 @@
     <!-- outlook -->
     <div class="card reveal">
       <h3>Next 7 days</h3>
-      <div class="hint">Days 1–5 from the NWS lake-inflow model · days 6–7 rain-based guess</div>
       <div class="outlook" id="outlook"></div>
     </div>
 
@@ -276,20 +271,23 @@
       <div class="chart-head">
         <div>
           <h3>Lake inflow</h3>
-          <div class="hint">History from USGS · forecast from NWS point PMAW2 “Cheat River above Cheat Lake”</div>
+          <div class="hint">History from USGS · forecast from NWS point PMAW2</div>
         </div>
-        <div class="pills" id="past-pills">
-          <button class="pill" data-past="7">7D</button>
-          <button class="pill on" data-past="14">14D</button>
-          <button class="pill" data-past="30">30D</button>
-          <button class="pill" data-past="90">90D</button>
-          <span style="width:10px"></span>
-          <button class="pill" data-fwd="0">+0</button>
-          <button class="pill on" data-fwd="5">+5D</button>
+        <div class="pills stack" id="past-pills">
+          <div class="pill-row">
+            <button class="pill" data-past="7">7D</button>
+            <button class="pill on" data-past="14">14D</button>
+            <button class="pill" data-past="30">30D</button>
+            <button class="pill" data-past="90">90D</button>
+          </div>
+          <div class="pill-row">
+            <button class="pill fwd" data-fwd="0">+0</button>
+            <button class="pill on fwd" data-fwd="5">+5D</button>
+          </div>
         </div>
       </div>
       <div class="chart-box"><canvas id="flowChart"></canvas></div>
-      <div class="legend-note">dashed = NWS forecast (5-day horizon) · verdict thresholds: <b>&lt;3k</b> good · <b>3–7k</b> caution · <b>&gt;7k</b> blown out</div>
+      <div class="legend-note">dashed = NWS forecast (5-day horizon)<span class="sep"> · </span><span class="thresh">verdict thresholds: <b>&lt;3k</b> good · <b>3–7k</b> caution · <b>&gt;7k</b> blown out</span></div>
     </div>
 
     <!-- rain chart -->
@@ -300,12 +298,12 @@
           <div class="hint">Observed = avg of the 6 USGS rain gauges inside the basin · forecast = avg of 7 in-basin model points</div>
         </div>
         <div class="pills" id="rain-pills">
-          <button class="pill" data-rpast="7">7D</button>
-          <button class="pill on" data-rpast="14">14D</button>
+          <button class="pill on" data-rpast="7">7D</button>
+          <button class="pill" data-rpast="14">14D</button>
         </div>
       </div>
       <div class="chart-box short"><canvas id="rainChart"></canvas></div>
-      <div class="legend-note">Rule of thumb: <b>&gt;1″ basin-wide in a day</b> = pulse likely; it reaches the main lake ~18–30 h after the rain.</div>
+      <div class="legend-note">Water reaches the main lake ~18–30 h after the rain.</div>
     </div>
 
     <!-- lake level chart -->
@@ -313,7 +311,7 @@
       <div class="chart-head">
         <div>
           <h3>Lake elevation</h3>
-          <div class="hint">USGS @ Stewartstown · shaded band = typical summer pool (868–870 ft)</div>
+          <div class="hint">USGS @ Stewartstown · shaded = typical range</div>
         </div>
       </div>
       <div class="chart-box short"><canvas id="lakeChart"></canvas></div>
@@ -322,26 +320,8 @@
     <!-- gauges -->
     <div class="card reveal">
       <h3>Gauges</h3>
-      <div class="hint">Upstream → downstream. Sparklines show the last 14 days.</div>
+      <div class="hint">Sparklines show last 14 days.</div>
       <div class="gauges" id="gauges"></div>
-    </div>
-
-    <!-- how water moves -->
-    <div class="card reveal">
-      <h3>Riverwater Path</h3>
-      <div class="flowpath">
-        <div class="fp-node"><div class="nm">Rain in the basin</div><div class="tm">Canaan · Dry Fork · Shavers Fk headwaters</div></div>
-        <div class="fp-arrow">➜</div>
-        <div class="fp-node"><div class="nm">Parsons</div><div class="tm">responds ~6–12 h after rain</div></div>
-        <div class="fp-arrow">➜</div>
-        <div class="fp-node"><div class="nm">Albright</div><div class="tm">+6–7 h (measured, 7/21 storm)</div></div>
-        <div class="fp-arrow">➜</div>
-        <div class="fp-node"><div class="nm">Main lake</div><div class="tm">+6–18 h to push down-pool</div></div>
-      </div>
-      <div class="fp-note" id="lagnote">
-        <b>Total: rain → main lake ≈ 18–30 h.</b> Lake clears usually <b>~2–4 days after Albright drops back
-        under ~3,000 cfs</b> following heavy rain.
-      </div>
     </div>
 
     <p class="foot">
@@ -747,7 +727,7 @@
 
     const charts = {};
     const view = { past: 14, fwd: 5 };   // lake inflow chart
-    const rainView = { past: 14 };       // watershed rain chart (historical window)
+    const rainView = { past: 7 };        // watershed rain chart (historical window)
     const RAIN_FWD = 7;                  // rain forecast horizon (days)
 
     const TT_STYLE = {
