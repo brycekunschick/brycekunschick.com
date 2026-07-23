@@ -203,6 +203,7 @@
 
     @media (max-width: 560px) {
       .chart-box { height: 270px; }
+      .chart-head .pills { width: 100%; justify-content: flex-end; }
       .legend-note .thresh { display: block; margin-top: 3px; }
       .legend-note .sep { display: none; }
       .stats { gap: 9px; }
@@ -252,8 +253,8 @@
 
     <!-- stat cards -->
     <div class="stats">
-      <div class="stat reveal"><div class="k">Lake inflow now</div><div class="v"><span id="s-inflow">—</span><small>cfs</small></div><div class="d" id="s-inflow-d"></div></div>
-      <div class="stat reveal"><div class="k">In the lake (lagged)</div><div class="v"><span id="s-lagged">—</span><small>cfs</small></div><div class="d" id="s-lagged-d">what passed Albright 6–36 h ago</div></div>
+      <div class="stat reveal"><div class="k">Current inflow</div><div class="v"><span id="s-inflow">—</span><small>cfs</small></div><div class="d" id="s-inflow-d"></div></div>
+      <div class="stat reveal"><div class="k">Recent inflow</div><div class="v"><span id="s-lagged">—</span><small>cfs</small></div><div class="d" id="s-lagged-d">Albright 6–36 h ago</div></div>
       <div class="stat reveal"><div class="k">Lake level</div><div class="v"><span id="s-elev">—</span><small>ft</small></div><div class="d" id="s-elev-d"></div></div>
       <div class="stat reveal"><div class="k">Water temp</div><div class="v"><span id="s-temp">—</span><small>°F</small></div><div class="d">Cheat @ Albright</div></div>
       <div class="stat reveal"><div class="k">Basin rain · 48 h</div><div class="v"><span id="s-rain48">—</span><small>in</small></div><div class="d">avg of 6 in-basin gauges</div></div>
