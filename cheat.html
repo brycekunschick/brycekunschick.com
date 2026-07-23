@@ -86,45 +86,31 @@
     @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
     @media (prefers-reduced-motion: reduce) {
       body.ready .reveal { animation: none; opacity: 1; }
-      .ripple span, .ripple::after, .pulse-dot::after, .hero-waves path { animation: none !important; }
+      .ripple span, .ripple::after, .pulse-dot::after { animation: none !important; }
     }
 
     /* ── header ─────────────────────────────────────────── */
-    .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-    .title { font-size: clamp(27px, 4vw, 38px); font-weight: 800; letter-spacing: -.02em; color: var(--deep); }
-    .title .thin { color: var(--blue); font-size: .55em; font-weight: 700; }
-    .home-link { font-size: 13px; color: var(--faint); font-weight: 500; }
+    .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .title-block { display: flex; flex-direction: column; }
+    .title { font-size: clamp(27px, 4vw, 38px); font-weight: 800; letter-spacing: -.02em; color: var(--deep); line-height: 1.04; }
+    .place { font-size: clamp(13px, 1.8vw, 16px); font-weight: 600; color: var(--blue); margin-top: 3px; }
+    .home-link { display: inline-block; font-size: 13px; color: var(--faint); font-weight: 500; margin-bottom: 10px; }
 
-    /* ── hero verdict ───────────────────────────────────── */
-    .hero {
-      position: relative; overflow: hidden; margin-top: 22px;
-      border-radius: 22px; padding: 28px 28px 34px;
-      background: linear-gradient(135deg, #e8f2ff 0%, #f2f9ff 55%, #eaf6ff 100%);
-      border: 1px solid #d8e8fa; box-shadow: var(--shadow);
-    }
-    .hero-waves { position: absolute; left: 0; right: 0; bottom: -6px; height: 64px; opacity: .55; pointer-events: none; }
-    .hero-waves path { animation: drift 26s linear infinite; }
-    .hero-waves path:nth-child(2) { animation-duration: 38s; animation-direction: reverse; opacity: .6; }
-    @keyframes drift { from { transform: translateX(0); } to { transform: translateX(-340px); } }
-    .hero-inner { position: relative; z-index: 1; display: flex; gap: 26px; align-items: center; flex-wrap: wrap; }
-
+    /* ── verdict pill (top-right status) ────────────────── */
     .verdict-pill {
-      display: inline-flex; align-items: center; gap: 11px;
-      font-size: clamp(21px, 3vw, 27px); font-weight: 800; letter-spacing: .01em;
-      padding: 13px 24px; border-radius: 999px; color: #fff;
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 14px; font-weight: 800; letter-spacing: .03em;
+      padding: 8px 15px; border-radius: 999px; color: #fff; flex: none;
       box-shadow: var(--shadow-lg);
     }
     .verdict-pill.v0 { background: linear-gradient(120deg, #059669, #10b981); }
     .verdict-pill.v1 { background: linear-gradient(120deg, #d97706, #f59e0b); }
     .verdict-pill.v2 { background: linear-gradient(120deg, #dc2626, #ef4444); }
-    .pulse-dot { position: relative; width: 11px; height: 11px; border-radius: 50%; background: #fff; flex: none; }
+    .pulse-dot { position: relative; width: 7px; height: 7px; border-radius: 50%; background: #fff; flex: none; }
     .pulse-dot::after {
-      content: ''; position: absolute; inset: -6px; border-radius: 50%;
+      content: ''; position: absolute; inset: -5px; border-radius: 50%;
       border: 2px solid rgba(255, 255, 255, .8); animation: rip 1.9s ease-out infinite;
     }
-    .hero-text h2 { font-size: clamp(17px, 2.4vw, 21px); font-weight: 700; color: var(--deep); }
-    .hero-text p { color: var(--muted); font-size: 14px; margin-top: 5px; max-width: 680px; line-height: 1.6; }
-    .updated { font-size: 12px; color: var(--faint); margin-top: 14px; }
 
     /* ── stat cards ─────────────────────────────────────── */
     .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 18px; }
@@ -244,30 +230,16 @@
 
   <div class="wrap">
 
+    <a class="home-link reveal" href="index.html">← brycekunschick.com</a>
     <div class="top reveal">
-      <div>
-        <div class="title">Cheat Lake <span class="thin">· Morgantown, WV</span></div>
+      <div class="title-block">
+        <div class="title">Cheat Lake</div>
+        <div class="place">Morgantown, WV</div>
       </div>
-      <a class="home-link" href="index.html">← brycekunschick.com</a>
+      <div class="verdict-pill v1" id="vpill" title=""><span class="pulse-dot"></span><span id="vword">…</span></div>
     </div>
 
     <div class="err-banner" id="errbanner"></div>
-
-    <!-- hero verdict -->
-    <div class="hero reveal" id="hero">
-      <svg class="hero-waves" viewBox="0 0 1360 64" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-        <path fill="#bcdcfa" d="M0 36 Q 85 20 170 36 T 340 36 T 510 36 T 680 36 T 850 36 T 1020 36 T 1190 36 T 1360 36 V64 H0 Z" />
-        <path fill="#8ec7f5" d="M0 46 Q 85 32 170 46 T 340 46 T 510 46 T 680 46 T 850 46 T 1020 46 T 1190 46 T 1360 46 V64 H0 Z" />
-      </svg>
-      <div class="hero-inner">
-        <div class="verdict-pill v1" id="vpill"><span class="pulse-dot"></span><span id="vword">…</span></div>
-        <div class="hero-text">
-          <h2 id="vhead">Reading the water…</h2>
-          <p id="vsub"></p>
-        </div>
-      </div>
-      <div class="updated" id="updated" style="position:relative;z-index:1"></div>
-    </div>
 
     <!-- stat cards -->
     <div class="stats">
@@ -690,16 +662,8 @@
       const v = state.verdict;
       const pill = $('vpill');
       pill.className = `verdict-pill v${v.level}`;
+      pill.title = v.head;
       $('vword').textContent = v.word;
-      $('vhead').textContent = v.head;
-
-      const bits = [];
-      if (v.lagged != null) bits.push(`Water now in the main lake passed Albright at ~${fmtNum(v.lagged)} cfs.`);
-      if (v.latest != null) bits.push(`Current inflow ${fmtNum(v.latest)} cfs (${v.rising >= 1.05 ? 'rising' : v.rising <= 0.95 ? 'falling' : 'steady'}).`);
-      bits.push(...v.extra);
-      $('vsub').textContent = bits.join(' ');
-      const iss = state.pmaw2?.issued ? new Date(state.pmaw2.issued).toLocaleString([], { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : null;
-      $('updated').textContent = `Updated ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` + (iss ? ` · NWS forecast issued ${iss}` : '');
     }
 
     function renderStats(state) {
