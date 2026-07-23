@@ -1,0 +1,13 @@
+{
+  "name": "Cheat Lake Conditions",
+  "short_name": "Cheat Lake",
+  "icons": [
+    { "src": "/img/cheat-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/img/cheat-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ],
+  "start_url": "/cheat",
+  "scope": "/cheat",
+  "theme_color": "#0b4aa2",
+  "background_color": "#f6f9fd",
+  "display": "standalone"
+}
