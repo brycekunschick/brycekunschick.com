@@ -92,7 +92,7 @@
     /* ── header ─────────────────────────────────────────── */
     .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
     .title { font-size: clamp(27px, 4vw, 38px); font-weight: 800; letter-spacing: -.02em; color: var(--deep); }
-    .title .thin { color: var(--blue); }
+    .title .thin { color: var(--blue); font-size: .55em; font-weight: 700; }
     .home-link { font-size: 13px; color: var(--faint); font-weight: 500; }
 
     /* ── hero verdict ───────────────────────────────────── */
@@ -127,7 +127,7 @@
     .updated { font-size: 12px; color: var(--faint); margin-top: 14px; }
 
     /* ── stat cards ─────────────────────────────────────── */
-    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-top: 18px; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 18px; }
     .stat {
       background: var(--card); border: 1px solid var(--line); border-radius: 18px;
       padding: 18px 18px 16px; box-shadow: var(--shadow);
@@ -148,10 +148,10 @@
     }
     .card h3 { font-size: 16px; font-weight: 700; color: var(--deep); }
     .card .hint { font-size: 12.5px; color: var(--faint); margin-top: 3px; }
-    .outlook { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 10px; margin-top: 16px; }
+    .outlook { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-top: 16px; }
     .day {
       text-align: center; border: 1px solid var(--line); border-radius: 14px; padding: 12px 6px 11px;
-      transition: transform .22s ease; background: #fbfdff;
+      transition: transform .22s ease; background: #fbfdff; scroll-snap-align: start;
     }
     .day:hover { transform: translateY(-2px); }
     .day .dn { font-size: 12px; font-weight: 700; color: var(--muted); }
@@ -217,6 +217,14 @@
       .chart-box { height: 270px; }
       .fp-arrow { display: none; }
       .fp-node { flex-basis: 46%; }
+      .stats { gap: 9px; }
+      .stat { padding: 13px 11px 11px; border-radius: 14px; }
+      .stat .k { font-size: 10px; letter-spacing: .04em; }
+      .stat .v { font-size: 19px; }
+      .stat .v small { font-size: 11px; }
+      .stat .d { font-size: 10.5px; }
+      .outlook { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; -webkit-overflow-scrolling: touch; }
+      .outlook .day { flex: 0 0 96px; }
     }
   </style>
 </head>
@@ -238,7 +246,7 @@
 
     <div class="top reveal">
       <div>
-        <div class="title">Cheat Lake <span class="thin">· Conditions</span></div>
+        <div class="title">Cheat Lake <span class="thin">· Morgantown, WV</span></div>
       </div>
       <a class="home-link" href="index.html">← brycekunschick.com</a>
     </div>
@@ -273,8 +281,8 @@
 
     <!-- outlook -->
     <div class="card reveal">
-      <h3>Next 10 days</h3>
-      <div class="hint">Days 1–5 from the NWS lake-inflow model · days 6–10 rain-based guess</div>
+      <h3>Next 7 days</h3>
+      <div class="hint">Days 1–5 from the NWS lake-inflow model · days 6–7 rain-based guess</div>
       <div class="outlook" id="outlook"></div>
     </div>
 
@@ -282,7 +290,7 @@
     <div class="card reveal">
       <div class="chart-head">
         <div>
-          <h3>Lake inflow — Cheat @ Albright + Big Sandy</h3>
+          <h3>Lake inflow</h3>
           <div class="hint">History from USGS · forecast from NWS point PMAW2 “Cheat River above Cheat Lake”</div>
         </div>
         <div class="pills" id="past-pills">
@@ -293,7 +301,6 @@
           <span style="width:10px"></span>
           <button class="pill" data-fwd="0">+0</button>
           <button class="pill on" data-fwd="5">+5D</button>
-          <button class="pill" data-fwd="10">+10D</button>
         </div>
       </div>
       <div class="chart-box"><canvas id="flowChart"></canvas></div>
@@ -387,9 +394,9 @@
 
     // verdict bands on lag-adjusted inflow (cfs) — calibrated against the trips below
     const BANDS = [
-      { max: 3000, level: 0, word: 'GOOD', head: 'Fishable — clear to lightly stained, normal current.' },
-      { max: 7000, level: 1, word: 'CAUTION', head: 'Stained and pushing — fish coves and edges.' },
-      { max: Infinity, level: 2, word: 'BLOWN OUT', head: 'High, muddy, debris — stay home.' },
+      { max: 3000, level: 0, word: 'GOOD', head: 'Fishable. Clear to lightly stained, normal current.' },
+      { max: 7000, level: 1, word: 'CAUTION', head: 'Stained and pushing. Fish coves and edges.' },
+      { max: Infinity, level: 2, word: 'BLOWN OUT', head: 'High, muddy, debris. Stay home.' },
     ];
     const LEVEL_COLOR = ['#059669', '#d97706', '#dc2626'];
     const DEBRIS_PEAK = 12000;   // cfs — a pulse this size leaves logs in the lake for days
@@ -654,7 +661,7 @@
       if (peak > DEBRIS_PEAK && peakAgeH != null && peakAgeH < 96) {
         if (peakAgeH < 48) level = 2; else level = Math.max(level, 1);
         const ageTxt = peakAgeH < 48 ? `${Math.round(peakAgeH)} h` : `${Math.round(peakAgeH / 24)} days`;
-        extra.push(`A ${fmtNum(peak)} cfs peak passed ${ageTxt} ago — mud and floating debris linger.`);
+        extra.push(`A ${fmtNum(peak)} cfs peak passed ${ageTxt} ago, so expect lingering mud and floating debris.`);
       }
 
       // recovery estimate off the NWS forecast
@@ -667,11 +674,11 @@
           extra.push(`Not forecast to drop below ${fmtNum(FISHABLE_CFS)} cfs within 5 days.`);
         }
       }
-      if (rising > 2 && level === 0) extra.push('A fresh pulse is passing Albright now — the window closes in ~12–24 h.');
-      if (rain48 != null && rain48 > 1.5) extra.push(`${rain48.toFixed(1)}″ of basin rain in the last 48 h — a rise is coming.`);
+      if (rising > 2 && level === 0) extra.push('A fresh pulse is passing Albright now. The window closes in ~12–24 h.');
+      if (rain48 != null && rain48 > 1.5) extra.push(`${rain48.toFixed(1)}″ of basin rain in the last 48 h means a rise is coming.`);
       if (level === 0 && rainFC?.length) {
         const soon = rainFC.slice(0, 3).reduce((a, d) => a + d.rain, 0);
-        if (soon > 1.5) extra.push(`${soon.toFixed(1)}″ forecast over the next 3 days — go sooner, not later.`);
+        if (soon > 1.5) extra.push(`${soon.toFixed(1)}″ forecast over the next 3 days. Go sooner, not later.`);
       }
 
       const final = BANDS.find(b => b.level === level) ?? band;
@@ -740,7 +747,7 @@
       const fcRain = Object.fromEntries((state.rainFC ?? []).map(d => [d.date, d]));
       const cells = [];
       let debrisCarry = state.verdict.peak > DEBRIS_PEAK && state.verdict.peakAgeH != null && state.verdict.peakAgeH < 96;
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 7; i++) {
         const day = isoDate(addDays(new Date(), i + 1));
         const dn = addDays(new Date(), i + 1).toLocaleDateString([], { weekday: 'short' });
         const flows = byDay[day];
