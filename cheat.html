@@ -186,9 +186,17 @@
     .fs-overlay {
       position: fixed; inset: 0; z-index: 80; background: var(--bg);
       display: flex; flex-direction: column; overscroll-behavior: contain;
-      padding: calc(30px + env(safe-area-inset-top, 0px)) 28px calc(28px + env(safe-area-inset-bottom, 0px));
+      --fsu: #dc2626; --fsd: #059669;
+      padding: calc(20px + env(safe-area-inset-top, 0px)) 28px calc(22px + env(safe-area-inset-bottom, 0px));
     }
-    .fs-top, .fs-tfs { width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; }
+    .fs-bar, .fs-top, .fs-tfs, .fs-bottom { width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; }
+    .fs-bar { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 16px; }
+    .fs-iconbtn {
+      width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line);
+      background: #fff; color: var(--muted); font-size: 16px; line-height: 1; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; padding: 0; flex: none;
+      transition: background .25s ease, color .25s ease, border-color .25s ease;
+    }
     .fs-overlay[hidden] { display: none; }
     .fs-overlay:not([hidden]) { animation: fsIn .35s cubic-bezier(.2, .7, .3, 1); }
     @keyframes fsIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
@@ -202,11 +210,7 @@
     }
     .fs-value small { font-size: 16px; font-weight: 600; color: var(--faint); }
     .fs-sub { font-size: 13.5px; color: var(--muted); margin-top: 3px; min-height: 19px; font-variant-numeric: tabular-nums; }
-    .fs-close {
-      width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line);
-      background: #fff; color: var(--muted); font-size: 17px; line-height: 1; cursor: pointer; flex: none;
-    }
-    .fs-chart { flex: 1; min-height: 0; max-height: 54vh; width: 100%; max-width: 600px; margin: auto; position: relative; }
+    .fs-chart { flex: 1; min-height: 0; max-height: 42vh; width: 100%; max-width: 600px; margin: auto; position: relative; }
     .fs-chart canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
     .fs-tfs { display: flex; gap: 8px; justify-content: center; }
     .fs-tf {
@@ -215,6 +219,29 @@
       cursor: pointer; transition: all .2s ease;
     }
     .fs-tf.on { background: var(--blue); color: #fff; box-shadow: 0 4px 14px rgba(29, 111, 224, .35); }
+    .fs-bottom { margin-top: 22px; }
+    .fs-bname {
+      font-size: 15px; font-weight: 800; color: var(--deep); letter-spacing: -.01em;
+      padding-bottom: 10px; border-bottom: 1px solid var(--line);
+    }
+    .fs-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 28px; margin-top: 14px; }
+    .fs-strow span {
+      display: block; font-size: 11px; font-weight: 600; color: var(--faint);
+      text-transform: uppercase; letter-spacing: .06em;
+    }
+    .fs-strow b { font-size: 15px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+    /* night mode (fullscreen view only) */
+    .fs-overlay.dark { background: #0a1322; --fsu: #f87171; --fsd: #34d399; }
+    .fs-overlay.dark .fs-label, .fs-overlay.dark .fs-sub { color: #8fa5c4; }
+    .fs-overlay.dark .fs-value { color: #f2f7ff; }
+    .fs-overlay.dark .fs-value small { color: #5f7899; }
+    .fs-overlay.dark .fs-iconbtn { background: #111f36; border-color: #22334f; color: #9db4d6; }
+    .fs-overlay.dark .fs-tf { color: #7e96ba; }
+    .fs-overlay.dark .fs-tf.on { background: var(--blue); color: #fff; }
+    .fs-overlay.dark .fs-bname { color: #e8f0fb; border-color: #1c2c46; }
+    .fs-overlay.dark .fs-strow span { color: #5f7899; }
+    .fs-overlay.dark .fs-strow b { color: #dbe7f5; }
 
     /* ── gauges grid ────────────────────────────────────── */
     .gauges { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
@@ -377,13 +404,16 @@
 
   <!-- fullscreen inflow view -->
   <div class="fs-overlay" id="fsOverlay" hidden>
+    <div class="fs-bar">
+      <button class="fs-iconbtn" id="fsTheme" aria-label="Toggle night mode"></button>
+      <button class="fs-iconbtn" id="fsClose" aria-label="Back">✕</button>
+    </div>
     <div class="fs-top">
       <div>
         <div class="fs-label">Lake inflow</div>
         <div class="fs-value" id="fsValue">—</div>
         <div class="fs-sub" id="fsSub"></div>
       </div>
-      <button class="fs-close" id="fsClose" aria-label="Close">✕</button>
     </div>
     <div class="fs-chart"><canvas id="fsCanvas"></canvas></div>
     <div class="fs-tfs" id="fsTfs">
@@ -391,6 +421,15 @@
       <button class="fs-tf on" data-tf="14">14D</button>
       <button class="fs-tf" data-tf="30">30D</button>
       <button class="fs-tf" data-tf="90">90D</button>
+    </div>
+    <div class="fs-bottom">
+      <div class="fs-bname">Cheat Lake</div>
+      <div class="fs-stats">
+        <div class="fs-strow"><span>High</span><b id="fsStHigh">—</b></div>
+        <div class="fs-strow"><span>Low</span><b id="fsStLow">—</b></div>
+        <div class="fs-strow"><span>Average</span><b id="fsStAvg">—</b></div>
+        <div class="fs-strow"><span>24h change</span><b id="fsStChg">—</b></div>
+      </div>
     </div>
   </div>
 
@@ -1071,7 +1110,22 @@
       tf: 14, cols: null, prevYs: null,
       animT0: 0, animDur: 380, revealT0: 0, revealDur: 600,
       scrub: null, lastIdx: -1, raf: 0, w: 0, h: 0,
+      dark: localStorage.getItem('cheat_fs_dark') === '1',
     };
+
+    const FS_SUN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+    const FS_MOON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>';
+
+    function fsPalette() {
+      return fs.dark
+        ? { line: '#4d9bff', fc: '#38bdf8', div: '#22375a', cross: '#3c5a85', fillTop: 'rgba(77,155,255,.20)', dotRing: '#0a1322' }
+        : { line: '#1d6fe0', fc: '#38bdf8', div: '#dbe7f5', cross: '#a9c3e2', fillTop: 'rgba(29,111,224,.16)', dotRing: '#ffffff' };
+    }
+
+    function fsApplyTheme() {
+      fs.el.classList.toggle('dark', fs.dark);
+      $('fsTheme').innerHTML = fs.dark ? FS_SUN : FS_MOON;
+    }
 
     // raw {t, v, fc} points for a timeframe: hourly ≤14d, daily beyond, + NWS forecast
     function fsRawSeries(tfDays) {
@@ -1141,12 +1195,13 @@
 
     function fsScene(disp, alpha) {
       const { ys, splitFrac } = disp, ctx = fs.ctx, w = fs.w, h = fs.h;
+      const P = fsPalette();
       const N = ys.length, sx = i => i / (N - 1) * w;
       const si = Math.max(1, Math.round(splitFrac * (N - 1)));
       ctx.globalAlpha = alpha;
       const grad = ctx.createLinearGradient(0, 0, 0, h);
-      grad.addColorStop(0, 'rgba(29,111,224,.16)');
-      grad.addColorStop(1, 'rgba(29,111,224,0)');
+      grad.addColorStop(0, P.fillTop);
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.beginPath();
       ctx.moveTo(0, ys[0]);
       for (let i = 1; i <= si; i++) ctx.lineTo(sx(i), ys[i]);
@@ -1155,27 +1210,27 @@
       ctx.beginPath();
       ctx.moveTo(0, ys[0]);
       for (let i = 1; i <= si; i++) ctx.lineTo(sx(i), ys[i]);
-      ctx.strokeStyle = '#1d6fe0'; ctx.lineWidth = 2.5;
+      ctx.strokeStyle = P.line; ctx.lineWidth = 2.5;
       ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.setLineDash([]);
       ctx.stroke();
       if (si < N - 1) {
         ctx.beginPath(); ctx.moveTo(sx(si), 0); ctx.lineTo(sx(si), h);
-        ctx.strokeStyle = '#dbe7f5'; ctx.lineWidth = 1; ctx.setLineDash([4, 5]); ctx.stroke();
+        ctx.strokeStyle = P.div; ctx.lineWidth = 1; ctx.setLineDash([4, 5]); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(sx(si), ys[si]);
         for (let i = si + 1; i < N; i++) ctx.lineTo(sx(i), ys[i]);
-        ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2.5; ctx.setLineDash([.1, 7]); ctx.stroke();
+        ctx.strokeStyle = P.fc; ctx.lineWidth = 2.5; ctx.setLineDash([.1, 7]); ctx.stroke();
         ctx.setLineDash([]);
       }
       ctx.globalAlpha = 1;
     }
 
     function fsDrawCross() {
-      const s = fs.scrub, ctx = fs.ctx;
+      const s = fs.scrub, ctx = fs.ctx, P = fsPalette();
       ctx.beginPath(); ctx.moveTo(s.x, 0); ctx.lineTo(s.x, fs.h);
-      ctx.strokeStyle = '#a9c3e2'; ctx.lineWidth = 1; ctx.setLineDash([]); ctx.stroke();
+      ctx.strokeStyle = P.cross; ctx.lineWidth = 1; ctx.setLineDash([]); ctx.stroke();
       ctx.beginPath(); ctx.arc(s.x, s.y, 5.5, 0, Math.PI * 2);
-      ctx.fillStyle = s.fc ? '#38bdf8' : '#1d6fe0'; ctx.fill();
-      ctx.lineWidth = 2.5; ctx.strokeStyle = '#fff'; ctx.stroke();
+      ctx.fillStyle = s.fc ? P.fc : P.line; ctx.fill();
+      ctx.lineWidth = 2.5; ctx.strokeStyle = P.dotRing; ctx.stroke();
     }
 
     function fsFrame(nowT) {
@@ -1210,9 +1265,39 @@
       if (first && first.v > 0) {
         const diff = last.v - first.v, up = diff >= 0;
         const pct = Math.abs(diff / first.v * 100);
-        $('fsSub').innerHTML = `<span style="color:${up ? '#dc2626' : '#059669'};font-weight:600">` +
+        $('fsSub').innerHTML = `<span style="color:var(${up ? '--fsu' : '--fsd'});font-weight:600">` +
           `${up ? '▲' : '▼'} ${fmtNum(Math.abs(diff))} (${pct >= 10 ? pct.toFixed(0) : pct.toFixed(1)}%)</span> past ${fs.tf} days`;
       } else $('fsSub').textContent = `past ${fs.tf} days`;
+    }
+
+    // Robinhood-style stats for the viewed timeframe (history only, no forecast)
+    function fsStats() {
+      const c = fs.cols;
+      if (!c) return;
+      const hist = c.raw.pts.slice(0, c.raw.split);
+      if (!hist.length) return;
+      let hi = -Infinity, lo = Infinity, sum = 0;
+      for (const p of hist) { if (p.v > hi) hi = p.v; if (p.v < lo) lo = p.v; sum += p.v; }
+      $('fsStHigh').textContent = fmtNum(hi) + ' cfs';
+      $('fsStLow').textContent = fmtNum(lo) + ' cfs';
+      $('fsStAvg').textContent = fmtNum(sum / hist.length) + ' cfs';
+      const chgEl = $('fsStChg');
+      const e = [...STATE.inflowH.entries()];
+      if (e.length > 25) {
+        const toT = k => new Date(k.replace('T', ' ') + ':00').getTime();
+        const last = e[e.length - 1][1];
+        const target = toT(e[e.length - 1][0]) - 86400e3;
+        let best = e[0], bd = Infinity;
+        for (const it of e) { const d = Math.abs(toT(it[0]) - target); if (d < bd) { bd = d; best = it; } }
+        if (best[1] > 0) {
+          const pct = (last - best[1]) / best[1] * 100;
+          chgEl.textContent = `${pct >= 0 ? '+' : ''}${pct.toFixed(0)}%`;
+          chgEl.style.color = `var(${pct >= 0 ? '--fsu' : '--fsd'})`;
+          return;
+        }
+      }
+      chgEl.textContent = '—';
+      chgEl.style.color = '';
     }
 
     function fsHeaderScrub(p) {
@@ -1259,6 +1344,7 @@
       fs.animT0 = performance.now();
       fs.scrub = null; fs.lastIdx = -1;
       fsHeaderIdle();
+      fsStats();
     }
 
     function fsShow() {
@@ -1273,6 +1359,7 @@
       fs.revealT0 = performance.now();
       fs.scrub = null; fs.lastIdx = -1;
       fsHeaderIdle();
+      fsStats();
       cancelAnimationFrame(fs.raf);
       fs.raf = requestAnimationFrame(fsFrame);
     }
@@ -1288,8 +1375,14 @@
       fs.el = $('fsOverlay');
       fs.canvas = $('fsCanvas');
       fs.ctx = fs.canvas.getContext('2d');
+      fsApplyTheme();
       $('fsOpenBtn').addEventListener('click', fsShow);
       $('fsClose').addEventListener('click', fsHide);
+      $('fsTheme').addEventListener('click', () => {
+        fs.dark = !fs.dark;
+        try { localStorage.setItem('cheat_fs_dark', fs.dark ? '1' : '0'); } catch (e) { }
+        fsApplyTheme();
+      });
       document.addEventListener('keydown', e => { if (e.key === 'Escape' && fs.open) fsHide(); });
       window.addEventListener('resize', () => { if (fs.open) { fsResize(); fsHeaderIdle(); } });
       $('fsTfs').addEventListener('click', e => {
