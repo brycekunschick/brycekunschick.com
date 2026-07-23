@@ -86,7 +86,7 @@
     @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
     @media (prefers-reduced-motion: reduce) {
       body.ready .reveal { animation: none; opacity: 1; }
-      .ripple span, .ripple::after, .pulse-dot::after { animation: none !important; }
+      .ripple span, .ripple::after, .pulse-dot::after, .wave-divider path { animation: none !important; }
     }
 
     /* ── header ─────────────────────────────────────────── */
@@ -94,7 +94,14 @@
     .title-block { display: flex; flex-direction: column; }
     .title { font-size: clamp(27px, 4vw, 38px); font-weight: 800; letter-spacing: -.02em; color: var(--deep); line-height: 1.04; }
     .place { font-size: clamp(13px, 1.8vw, 16px); font-weight: 600; color: var(--blue); margin-top: 3px; }
-    .home-link { display: inline-block; font-size: 13px; color: var(--faint); font-weight: 500; margin-bottom: 10px; }
+    .home-link { display: block; text-align: right; font-size: 13px; color: var(--faint); font-weight: 500; margin-bottom: 8px; }
+
+    /* ── wave divider ───────────────────────────────────── */
+    .wave-divider { position: relative; width: 100%; height: 44px; margin: 16px 0 4px; overflow: hidden; }
+    .wave-divider svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .wave-divider path { animation: drift 24s linear infinite; }
+    .wave-divider .w2 { animation-duration: 34s; animation-direction: reverse; opacity: .6; }
+    @keyframes drift { from { transform: translateX(0); } to { transform: translateX(-360px); } }
 
     /* ── verdict pill (top-right status) ────────────────── */
     .verdict-pill {
@@ -236,7 +243,14 @@
         <div class="title">Cheat Lake</div>
         <div class="place">Morgantown, WV</div>
       </div>
-      <div class="verdict-pill v1" id="vpill" title=""><span class="pulse-dot"></span><span id="vword">…</span></div>
+      <div class="verdict-pill v1" id="vpill"><span class="pulse-dot"></span><span id="vword">…</span></div>
+    </div>
+
+    <div class="wave-divider reveal" aria-hidden="true">
+      <svg viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path class="w1" fill="#bcdcfa" d="M0 30 Q45 16 90 30 T180 30 T270 30 T360 30 T450 30 T540 30 T630 30 T720 30 T810 30 T900 30 T990 30 T1080 30 T1170 30 T1260 30 T1350 30 T1440 30 T1530 30 T1620 30 T1710 30 T1800 30 V60 H0 Z" />
+        <path class="w2" fill="#8ec7f5" d="M0 40 Q45 27 90 40 T180 40 T270 40 T360 40 T450 40 T540 40 T630 40 T720 40 T810 40 T900 40 T990 40 T1080 40 T1170 40 T1260 40 T1350 40 T1440 40 T1530 40 T1620 40 T1710 40 T1800 40 V60 H0 Z" />
+      </svg>
     </div>
 
     <div class="err-banner" id="errbanner"></div>
@@ -662,7 +676,6 @@
       const v = state.verdict;
       const pill = $('vpill');
       pill.className = `verdict-pill v${v.level}`;
-      pill.title = v.head;
       $('vword').textContent = v.word;
     }
 
