@@ -176,6 +176,45 @@
     .legend-note { font-size: 11.5px; color: var(--faint); margin-top: 10px; }
     .legend-note b { color: var(--muted); }
 
+    /* ── fullscreen inflow view ─────────────────────────── */
+    .fs-btn {
+      display: none; position: absolute; right: 8px; bottom: 30px; z-index: 5;
+      width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line);
+      background: #fff; color: var(--blue); cursor: pointer; padding: 0;
+      align-items: center; justify-content: center; box-shadow: var(--shadow);
+    }
+    .fs-overlay {
+      position: fixed; inset: 0; z-index: 80; background: var(--bg);
+      display: flex; flex-direction: column; overscroll-behavior: contain;
+      padding: calc(16px + env(safe-area-inset-top, 0px)) 18px calc(14px + env(safe-area-inset-bottom, 0px));
+    }
+    .fs-overlay[hidden] { display: none; }
+    .fs-overlay:not([hidden]) { animation: fsIn .35s cubic-bezier(.2, .7, .3, 1); }
+    @keyframes fsIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { .fs-overlay:not([hidden]) { animation: none; } }
+    body.fs-lock { overflow: hidden; }
+    .fs-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .fs-label { font-size: 13px; font-weight: 600; color: var(--muted); }
+    .fs-value {
+      font-size: 38px; font-weight: 800; color: var(--deep); letter-spacing: -.02em;
+      margin-top: 4px; font-variant-numeric: tabular-nums;
+    }
+    .fs-value small { font-size: 16px; font-weight: 600; color: var(--faint); }
+    .fs-sub { font-size: 13.5px; color: var(--muted); margin-top: 3px; min-height: 19px; font-variant-numeric: tabular-nums; }
+    .fs-close {
+      width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line);
+      background: #fff; color: var(--muted); font-size: 17px; line-height: 1; cursor: pointer; flex: none;
+    }
+    .fs-chart { flex: 1; min-height: 0; position: relative; margin: 14px -6px 10px; }
+    .fs-chart canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
+    .fs-tfs { display: flex; gap: 8px; justify-content: center; }
+    .fs-tf {
+      font-family: inherit; font-size: 13px; font-weight: 700; color: var(--muted);
+      background: transparent; border: 0; border-radius: 999px; padding: 8px 16px;
+      cursor: pointer; transition: all .2s ease;
+    }
+    .fs-tf.on { background: var(--blue); color: #fff; box-shadow: 0 4px 14px rgba(29, 111, 224, .35); }
+
     /* ── gauges grid ────────────────────────────────────── */
     .gauges { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
     .gauge {
@@ -203,6 +242,7 @@
 
     @media (max-width: 560px) {
       .chart-box { height: 270px; }
+      .fs-btn { display: flex; }
       .chart-head .pills { width: 100%; justify-content: flex-end; }
       .legend-note .thresh { display: block; margin-top: 3px; }
       .legend-note .sep { display: none; }
@@ -287,7 +327,11 @@
           </div>
         </div>
       </div>
-      <div class="chart-box"><canvas id="flowChart"></canvas></div>
+      <div class="chart-box"><canvas id="flowChart"></canvas>
+        <button class="fs-btn" id="fsOpenBtn" aria-label="Fullscreen view">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+        </button>
+      </div>
       <div class="legend-note">dashed = NWS forecast (5-day horizon)<span class="sep"> · </span><span class="thresh">verdict thresholds: <b>&lt;3k</b> good · <b>3–7k</b> caution · <b>&gt;7k</b> blown out</span></div>
     </div>
 
@@ -328,6 +372,25 @@
     <p class="foot">
       Data: USGS NWIS, NWS/NWPS PMAW2, Open-Meteo.
     </p>
+  </div>
+
+  <!-- fullscreen inflow view -->
+  <div class="fs-overlay" id="fsOverlay" hidden>
+    <div class="fs-top">
+      <div>
+        <div class="fs-label">Lake inflow</div>
+        <div class="fs-value" id="fsValue">—</div>
+        <div class="fs-sub" id="fsSub"></div>
+      </div>
+      <button class="fs-close" id="fsClose" aria-label="Close">✕</button>
+    </div>
+    <div class="fs-chart"><canvas id="fsCanvas"></canvas></div>
+    <div class="fs-tfs" id="fsTfs">
+      <button class="fs-tf" data-tf="7">7D</button>
+      <button class="fs-tf on" data-tf="14">14D</button>
+      <button class="fs-tf" data-tf="30">30D</button>
+      <button class="fs-tf" data-tf="90">90D</button>
+    </div>
   </div>
 
   <script>
@@ -1000,6 +1063,248 @@
       document.querySelectorAll('[data-rpast]').forEach(x => x.classList.toggle('on', x === b));
       buildRainChart(STATE);
     });
+
+    // ─── FULLSCREEN INFLOW (hand-rolled canvas, Robinhood-style scrubbing) ─────
+    const fs = {
+      el: null, canvas: null, ctx: null, open: false,
+      tf: 14, cols: null, prevYs: null,
+      animT0: 0, animDur: 380, revealT0: 0, revealDur: 600,
+      scrub: null, lastIdx: -1, raf: 0, w: 0, h: 0,
+    };
+
+    // raw {t, v, fc} points for a timeframe: hourly ≤14d, daily beyond, + NWS forecast
+    function fsRawSeries(tfDays) {
+      const now = new Date();
+      const pts = [];
+      if (tfDays <= 14) {
+        const cut = hourKey(addDays(now, -tfDays));
+        for (const [k, v] of STATE.inflowH.entries())
+          if (k >= cut) pts.push({ t: new Date(k.replace('T', ' ') + ':00').getTime(), v, fc: false });
+      } else {
+        const cut = isoDate(addDays(now, -tfDays));
+        for (const [d, v] of Object.entries(STATE.inflowD).sort())
+          if (d >= cut) pts.push({ t: new Date(d + 'T12:00').getTime(), v, fc: false });
+      }
+      const split = pts.length;
+      if (pts.length && STATE.pmaw2?.fc?.length) {
+        const lastT = pts[split - 1].t;
+        for (const p of STATE.pmaw2.fc) if (p.t.getTime() > lastT) pts.push({ t: p.t.getTime(), v: p.cfs, fc: true });
+      }
+      return { pts, split };
+    }
+
+    // resample to N equal-time columns of pixel-space y (enables shape morphing)
+    function fsColumns(raw, N, h) {
+      const { pts, split } = raw;
+      if (pts.length < 2) return null;
+      const t0 = pts[0].t, t1 = pts[pts.length - 1].t;
+      let mn = Infinity, mx = -Infinity;
+      for (const p of pts) { if (p.v < mn) mn = p.v; if (p.v > mx) mx = p.v; }
+      const pad = (mx - mn) * .1 || mx * .1 || 1;
+      mn = Math.max(0, mn - pad); mx += pad;
+      const ys = new Float32Array(N);
+      let j = 0;
+      for (let i = 0; i < N; i++) {
+        const t = t0 + (t1 - t0) * i / (N - 1);
+        while (j < pts.length - 2 && pts[j + 1].t < t) j++;
+        const a = pts[j], b = pts[j + 1] || a;
+        const f = b.t === a.t ? 0 : Math.min(1, Math.max(0, (t - a.t) / (b.t - a.t)));
+        ys[i] = h - ((a.v + (b.v - a.v) * f) - mn) / (mx - mn) * h;
+      }
+      const splitFrac = split >= pts.length ? 1 : (pts[split - 1].t - t0) / (t1 - t0);
+      return { ys, splitFrac, raw, t0, t1, mn, mx };
+    }
+
+    function fsResize() {
+      const box = fs.canvas.parentElement.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      fs.w = Math.max(1, Math.round(box.width));
+      fs.h = Math.max(1, Math.round(box.height));
+      fs.canvas.width = fs.w * dpr;
+      fs.canvas.height = fs.h * dpr;
+      fs.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      fs.cols = fsColumns(fsRawSeries(fs.tf), Math.min(480, Math.max(180, fs.w)), fs.h);
+      fs.prevYs = null;
+    }
+
+    // current display shape (lerped between prev and target while morphing)
+    function fsDisplay() {
+      if (!fs.cols) return null;
+      const t = Math.min(1, (performance.now() - fs.animT0) / fs.animDur);
+      if (!fs.prevYs || t >= 1) return { ys: fs.cols.ys, splitFrac: fs.cols.splitFrac };
+      const e = 1 - Math.pow(1 - t, 3);
+      const N = fs.cols.ys.length, out = new Float32Array(N);
+      for (let i = 0; i < N; i++) out[i] = fs.prevYs.ys[i] + (fs.cols.ys[i] - fs.prevYs.ys[i]) * e;
+      return { ys: out, splitFrac: fs.prevYs.splitFrac + (fs.cols.splitFrac - fs.prevYs.splitFrac) * e };
+    }
+
+    function fsScene(disp, alpha) {
+      const { ys, splitFrac } = disp, ctx = fs.ctx, w = fs.w, h = fs.h;
+      const N = ys.length, sx = i => i / (N - 1) * w;
+      const si = Math.max(1, Math.round(splitFrac * (N - 1)));
+      ctx.globalAlpha = alpha;
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, 'rgba(29,111,224,.16)');
+      grad.addColorStop(1, 'rgba(29,111,224,0)');
+      ctx.beginPath();
+      ctx.moveTo(0, ys[0]);
+      for (let i = 1; i <= si; i++) ctx.lineTo(sx(i), ys[i]);
+      ctx.lineTo(sx(si), h); ctx.lineTo(0, h); ctx.closePath();
+      ctx.fillStyle = grad; ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(0, ys[0]);
+      for (let i = 1; i <= si; i++) ctx.lineTo(sx(i), ys[i]);
+      ctx.strokeStyle = '#1d6fe0'; ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.setLineDash([]);
+      ctx.stroke();
+      if (si < N - 1) {
+        ctx.beginPath(); ctx.moveTo(sx(si), 0); ctx.lineTo(sx(si), h);
+        ctx.strokeStyle = '#dbe7f5'; ctx.lineWidth = 1; ctx.setLineDash([4, 5]); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(sx(si), ys[si]);
+        for (let i = si + 1; i < N; i++) ctx.lineTo(sx(i), ys[i]);
+        ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2.5; ctx.setLineDash([.1, 7]); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function fsDrawCross() {
+      const s = fs.scrub, ctx = fs.ctx;
+      ctx.beginPath(); ctx.moveTo(s.x, 0); ctx.lineTo(s.x, fs.h);
+      ctx.strokeStyle = '#a9c3e2'; ctx.lineWidth = 1; ctx.setLineDash([]); ctx.stroke();
+      ctx.beginPath(); ctx.arc(s.x, s.y, 5.5, 0, Math.PI * 2);
+      ctx.fillStyle = s.fc ? '#38bdf8' : '#1d6fe0'; ctx.fill();
+      ctx.lineWidth = 2.5; ctx.strokeStyle = '#fff'; ctx.stroke();
+    }
+
+    function fsFrame(nowT) {
+      if (!fs.open) return;
+      const ctx = fs.ctx;
+      ctx.clearRect(0, 0, fs.w, fs.h);
+      const disp = fsDisplay();
+      if (disp) {
+        if (fs.scrub) {
+          fsScene(disp, .3);                                    // dimmed beyond the finger
+          ctx.save(); ctx.beginPath(); ctx.rect(0, 0, fs.scrub.x, fs.h); ctx.clip();
+          fsScene(disp, 1); ctx.restore();
+          fsDrawCross();
+        } else {
+          const r = Math.min(1, (nowT - fs.revealT0) / fs.revealDur);
+          const rw = fs.w * (1 - Math.pow(1 - r, 3));           // draw-on reveal
+          if (rw < fs.w) {
+            ctx.save(); ctx.beginPath(); ctx.rect(0, 0, rw, fs.h); ctx.clip();
+            fsScene(disp, 1); ctx.restore();
+          } else fsScene(disp, 1);
+        }
+      }
+      fs.raf = requestAnimationFrame(fsFrame);
+    }
+
+    function fsHeaderIdle() {
+      const c = fs.cols;
+      if (!c) { $('fsValue').textContent = '—'; $('fsSub').textContent = ''; return; }
+      const hist = c.raw.pts.slice(0, c.raw.split);
+      const last = hist[hist.length - 1], first = hist[0];
+      $('fsValue').innerHTML = `${fmtNum(last.v)}<small> cfs</small>`;
+      if (first && first.v > 0) {
+        const diff = last.v - first.v, up = diff >= 0;
+        const pct = Math.abs(diff / first.v * 100);
+        $('fsSub').innerHTML = `<span style="color:${up ? '#dc2626' : '#059669'};font-weight:600">` +
+          `${up ? '▲' : '▼'} ${fmtNum(Math.abs(diff))} (${pct >= 10 ? pct.toFixed(0) : pct.toFixed(1)}%)</span> past ${fs.tf} days`;
+      } else $('fsSub').textContent = `past ${fs.tf} days`;
+    }
+
+    function fsHeaderScrub(p) {
+      $('fsValue').innerHTML = `${fmtNum(p.v)}<small> cfs</small>`;
+      const d = new Date(p.t);
+      const ds = d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }) +
+        (fs.tf <= 14 || p.fc ? ` · ${d.toLocaleTimeString([], { hour: 'numeric' })}` : '');
+      $('fsSub').innerHTML = p.fc ? `${ds} · <span style="color:#0ea5e9;font-weight:600">NWS forecast</span>` : ds;
+    }
+
+    function fsScrubAt(clientX) {
+      if (!fs.cols) return;
+      const rect = fs.canvas.getBoundingClientRect();
+      const frac = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+      const { raw, t0, t1, mn, mx } = fs.cols;
+      const t = t0 + frac * (t1 - t0);
+      let best = 0, bd = Infinity;
+      for (let i = 0; i < raw.pts.length; i++) {
+        const d = Math.abs(raw.pts[i].t - t);
+        if (d < bd) { bd = d; best = i; }
+      }
+      const p = raw.pts[best];
+      fs.scrub = {
+        x: (p.t - t0) / (t1 - t0) * fs.w,
+        y: fs.h - (p.v - mn) / (mx - mn) * fs.h,
+        fc: p.fc,
+      };
+      if (best !== fs.lastIdx) {
+        fs.lastIdx = best;
+        try { navigator.vibrate?.(1); } catch (e) { }
+      }
+      fsHeaderScrub(p);
+    }
+
+    function fsSetTF(tf) {
+      if (tf === fs.tf || !STATE) return;
+      const cur = fsDisplay();
+      fs.tf = tf;
+      const N = fs.cols ? fs.cols.ys.length : Math.min(480, Math.max(180, fs.w));
+      const next = fsColumns(fsRawSeries(tf), N, fs.h);
+      if (!next) return;
+      fs.prevYs = cur ? { ys: cur.ys, splitFrac: cur.splitFrac } : null;
+      fs.cols = next;
+      fs.animT0 = performance.now();
+      fs.scrub = null; fs.lastIdx = -1;
+      fsHeaderIdle();
+    }
+
+    function fsShow() {
+      if (!STATE) return;
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      fs.revealDur = reduce ? 1 : 600;
+      fs.animDur = reduce ? 1 : 380;
+      fs.el.hidden = false;
+      document.body.classList.add('fs-lock');
+      fs.open = true;
+      fsResize();
+      fs.revealT0 = performance.now();
+      fs.scrub = null; fs.lastIdx = -1;
+      fsHeaderIdle();
+      cancelAnimationFrame(fs.raf);
+      fs.raf = requestAnimationFrame(fsFrame);
+    }
+
+    function fsHide() {
+      fs.open = false;
+      cancelAnimationFrame(fs.raf);
+      fs.el.hidden = true;
+      document.body.classList.remove('fs-lock');
+    }
+
+    (function fsInit() {
+      fs.el = $('fsOverlay');
+      fs.canvas = $('fsCanvas');
+      fs.ctx = fs.canvas.getContext('2d');
+      $('fsOpenBtn').addEventListener('click', fsShow);
+      $('fsClose').addEventListener('click', fsHide);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && fs.open) fsHide(); });
+      window.addEventListener('resize', () => { if (fs.open) { fsResize(); fsHeaderIdle(); } });
+      $('fsTfs').addEventListener('click', e => {
+        const b = e.target.closest('.fs-tf');
+        if (!b) return;
+        document.querySelectorAll('.fs-tf').forEach(x => x.classList.toggle('on', x === b));
+        fsSetTF(parseInt(b.dataset.tf));
+      });
+      const cv = fs.canvas;
+      const clear = () => { fs.scrub = null; fs.lastIdx = -1; fsHeaderIdle(); };
+      cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); fsScrubAt(e.clientX); });
+      cv.addEventListener('pointermove', e => fsScrubAt(e.clientX));
+      cv.addEventListener('pointerup', clear);
+      cv.addEventListener('pointercancel', clear);
+      cv.addEventListener('pointerleave', clear);
+    })();
 
     // ─── BOOT ──────────────────────────────────────────────────────────────────
     async function main() {
