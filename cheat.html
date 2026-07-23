@@ -177,7 +177,7 @@
     .fp-note { font-size: 12.5px; color: var(--muted); margin-top: 12px; padding: 11px 14px; background: #f2f8ff; border-radius: 12px; border: 1px solid #ddebfa; line-height: 1.55; }
 
     /* ── gauges grid ────────────────────────────────────── */
-    .gauges { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-top: 16px; }
+    .gauges { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 16px; }
     .gauge {
       border: 1px solid var(--line); border-radius: 16px; padding: 15px 15px 11px; background: #fbfdff;
       transition: transform .22s ease, box-shadow .22s ease;
@@ -192,12 +192,6 @@
     .gauge .gl { font-size: 11px; margin-top: 6px; display: inline-block; }
 
     /* ── trips ──────────────────────────────────────────── */
-    .trips { display: grid; gap: 10px; margin-top: 14px; }
-    .trip { display: flex; gap: 13px; align-items: center; border: 1px solid var(--line); border-radius: 14px; padding: 12px 15px; background: #fbfdff; }
-    .trip .tdot { width: 11px; height: 11px; border-radius: 50%; flex: none; }
-    .trip .td { font-size: 13px; font-weight: 700; color: var(--deep); min-width: 74px; }
-    .trip .tn { font-size: 12.5px; color: var(--muted); }
-    .trip .tq { margin-left: auto; font-size: 12.5px; font-weight: 700; color: var(--blue); white-space: nowrap; }
 
     .err-banner {
       display: none; margin-top: 16px; padding: 12px 16px; border-radius: 14px;
@@ -218,6 +212,8 @@
       .stat .d { font-size: 10.5px; }
       .outlook { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; -webkit-overflow-scrolling: touch; }
       .outlook .day { flex: 0 0 96px; }
+      .gauges { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; -webkit-overflow-scrolling: touch; }
+      .gauges .gauge { flex: 0 0 200px; scroll-snap-align: start; }
     }
   </style>
 </head>
@@ -300,6 +296,10 @@
           <h3>Watershed rain</h3>
           <div class="hint">Observed = avg of the 6 USGS rain gauges inside the basin · forecast = avg of 7 in-basin model points</div>
         </div>
+        <div class="pills" id="rain-pills">
+          <button class="pill" data-rpast="7">7D</button>
+          <button class="pill on" data-rpast="14">14D</button>
+        </div>
       </div>
       <div class="chart-box short"><canvas id="rainChart"></canvas></div>
       <div class="legend-note">Rule of thumb: <b>&gt;1″ basin-wide in a day</b> = pulse likely; it reaches the main lake ~18–30 h after the rain.</div>
@@ -318,7 +318,7 @@
 
     <!-- how water moves -->
     <div class="card reveal">
-      <h3>How water reaches the lake</h3>
+      <h3>Riverwater Path</h3>
       <div class="flowpath">
         <div class="fp-node"><div class="ic">🌧️</div><div class="nm">Rain in the basin</div><div class="tm">Canaan · Dry Fork · Shavers Fk headwaters</div></div>
         <div class="fp-arrow">➜</div>
@@ -339,13 +339,6 @@
       <h3>Gauges</h3>
       <div class="hint">Upstream → downstream. Sparklines show the last 14 days.</div>
       <div class="gauges" id="gauges"></div>
-    </div>
-
-    <!-- trip log -->
-    <div class="card reveal">
-      <h3>Trip log (calibration)</h3>
-      <div class="hint">These verify the thresholds — edit the TRIPS array in this file to add more.</div>
-      <div class="trips" id="trips"></div>
     </div>
 
     <p class="foot">
@@ -754,7 +747,9 @@
     Chart.defaults.borderColor = '#e8f0f8';
 
     const charts = {};
-    const view = { past: 14, fwd: 5 };
+    const view = { past: 14, fwd: 5 };   // lake inflow chart
+    const rainView = { past: 14 };       // watershed rain chart (historical window)
+    const RAIN_FWD = 7;                  // rain forecast horizon (days)
 
     const TT_STYLE = {
       backgroundColor: '#ffffff', titleColor: '#0c2340', bodyColor: '#5b7290',
@@ -860,13 +855,13 @@
       destroyChart('rain');
       const now = new Date();
       const keys = [], obs = [], fc = [], probs = [];
-      const cut = isoDate(addDays(now, -view.past));
+      const cut = isoDate(addDays(now, -rainView.past));
       const today = isoDate(now);
       for (const [d, v] of Object.entries(state.rainD).sort()) {
         if (d >= cut && d <= today) { keys.push(d); obs.push(v); fc.push(null); probs.push(null); }
       }
-      if (view.fwd > 0 && state.rainFC?.length) {
-        const limit = isoDate(addDays(now, view.fwd));
+      if (state.rainFC?.length) {
+        const limit = isoDate(addDays(now, RAIN_FWD));
         for (const d of state.rainFC) {
           if (d.date <= today || d.date > limit) continue;
           keys.push(d.date); obs.push(null); fc.push(d.rain); probs.push(d.prob);
@@ -908,33 +903,50 @@
       destroyChart('lake');
       const hourly = view.past <= 14;
       const now = new Date();
-      const keys = [], vals = [];
+      const line = [];
       if (hourly) {
         const cut = hourKey(addDays(now, -view.past));
         const m = resampleHourly(state.iv[LAKE_SITE]?.['62614'] ?? []);
-        for (const [k, v] of m.entries()) if (k >= cut) { keys.push(k); vals.push(v); }
+        for (const [k, v] of m.entries()) if (k >= cut) line.push({ x: new Date(k.replace('T', ' ') + ':00').getTime(), y: v });
       } else {
         const cut = isoDate(addDays(now, -view.past));
-        for (const [d, v] of Object.entries(state.lakeLong).sort()) if (d >= cut) { keys.push(d); vals.push(v); }
+        for (const [d, v] of Object.entries(state.lakeLong).sort()) if (d >= cut) line.push({ x: new Date(d + 'T12:00').getTime(), y: v });
       }
+      if (!line.length) return;
+      const minTs = line[0].x, maxTs = line[line.length - 1].x;
+      const band = t => [{ x: minTs, y: t }, { x: maxTs, y: t }];
+
       charts.lake = new Chart($('lakeChart'), {
         type: 'line',
         data: {
-          labels: keys.map(labelFromKey),
           datasets: [
-            { label: 'Pool elevation', data: vals, borderColor: '#0b4aa2', borderWidth: 2.2, pointRadius: 0, tension: .3 },
-            { label: 'normal-high', data: keys.map(() => 870), borderColor: 'rgba(29,111,224,.25)', borderWidth: 1, pointRadius: 0, fill: '+1', backgroundColor: 'rgba(29,111,224,.06)' },
-            { label: 'normal-low', data: keys.map(() => 868), borderColor: 'rgba(29,111,224,.25)', borderWidth: 1, pointRadius: 0 },
+            { label: 'Pool elevation', data: line, borderColor: '#0b4aa2', borderWidth: 2.2, pointRadius: 0, tension: .3 },
+            { label: 'normal-high', data: band(870), borderColor: 'rgba(29,111,224,.25)', borderWidth: 1, pointRadius: 0, fill: '+1', backgroundColor: 'rgba(29,111,224,.06)' },
+            { label: 'normal-low', data: band(868), borderColor: 'rgba(29,111,224,.25)', borderWidth: 1, pointRadius: 0 },
           ],
         },
         options: {
-          responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+          responsive: true, maintainAspectRatio: false, interaction: { mode: 'nearest', axis: 'x', intersect: false },
           plugins: {
             legend: { display: false },
-            tooltip: { ...TT_STYLE, filter: c => c.datasetIndex === 0, callbacks: { label: c => ` ${c.parsed.y.toFixed(2)} ft` } },
+            tooltip: {
+              ...TT_STYLE, filter: c => c.datasetIndex === 0,
+              callbacks: {
+                title: items => new Date(items[0].parsed.x).toLocaleString([], { month: 'numeric', day: 'numeric', hour: 'numeric' }),
+                label: c => ` ${c.parsed.y.toFixed(2)} ft`,
+              },
+            },
           },
           scales: {
-            x: { ticks: { maxTicksLimit: 10, maxRotation: 0 }, grid: { display: false } },
+            x: {
+              type: 'linear', min: minTs, max: maxTs,
+              afterBuildTicks: axis => { axis.ticks = dayTicks(minTs, maxTs).map(value => ({ value })); },
+              ticks: {
+                autoSkip: false, maxRotation: 0,
+                callback: v => { const d = new Date(v); return `${d.getMonth() + 1}/${d.getDate()}`; },
+              },
+              grid: { display: false },
+            },
             y: { suggestedMin: 866.5, suggestedMax: 871.5, title: { display: true, text: 'ft (NGVD29)' } },
           },
         },
@@ -947,38 +959,31 @@
       buildLakeChart(state);
     }
 
-    // ─── RENDER: gauges + trips ────────────────────────────────────────────────
+    // ─── RENDER: gauges ────────────────────────────────────────────────────────
     function renderGauges(state) {
       const { iv } = state;
-      const order = ['03069500', '0307020015', '03070260', '03070500', '03071590'];
+      const order = ['03069500', '0307020015', '03070260', '03070500'];
       $('gauges').innerHTML = order.map(site => {
-        const isLake = site === LAKE_SITE;
-        const param = isLake ? '62614' : '00060';
-        const cur = latestOf(iv, site, param);
-        const ago = valueAgo(iv, site, param, 24);
+        const cur = latestOf(iv, site, '00060');
+        const ago = valueAgo(iv, site, '00060', 24);
         let delta = '';
         if (cur && ago != null) {
-          if (isLake) delta = `${(cur[1] - ago) >= 0 ? '+' : ''}${(cur[1] - ago).toFixed(1)} ft / 24 h`;
-          else {
-            const p = (cur[1] - ago) / ago * 100;
-            delta = `${p >= 0 ? '+' : ''}${p.toFixed(0)}% / 24 h`;
-          }
+          const p = (cur[1] - ago) / ago * 100;
+          delta = `${p >= 0 ? '+' : ''}${p.toFixed(0)}% / 24 h`;
         }
         const temp = latestOf(iv, site, '00010');
         if (temp) delta += `${delta ? ' · ' : ''}${(temp[1] * 9 / 5 + 32).toFixed(0)}°F`;
-        const usgsId = site.length > 10 ? site : site;
         return `<div class="gauge">
           <div class="gn">${SITES[site].name}</div><div class="gr">${SITES[site].role}</div>
-          <div class="gv">${cur ? (isLake ? cur[1].toFixed(1) : fmtNum(cur[1])) : '—'} <small>${isLake ? 'ft' : 'cfs'}</small></div>
+          <div class="gv">${cur ? fmtNum(cur[1]) : '—'} <small>cfs</small></div>
           <div class="gd">${delta}</div>
           <div class="spark-box"><canvas id="spark-${site}"></canvas></div>
-          <a class="gl" href="https://waterdata.usgs.gov/monitoring-location/${usgsId}/" target="_blank">USGS ${site} ↗</a>
+          <a class="gl" href="https://waterdata.usgs.gov/monitoring-location/${site}/" target="_blank">USGS ${site} ↗</a>
         </div>`;
       }).join('');
 
       for (const site of order) {
-        const param = site === LAKE_SITE ? '62614' : '00060';
-        const m = resampleHourly(iv[site]?.[param] ?? []);
+        const m = resampleHourly(iv[site]?.['00060'] ?? []);
         const vals = [...m.values()];
         if (!vals.length) continue;
         new Chart($(`spark-${site}`), {
@@ -991,19 +996,6 @@
           },
         });
       }
-    }
-
-    function renderTrips(state) {
-      $('trips').innerHTML = TRIPS.map(trip => {
-        const day = trip.t.slice(0, 10);
-        const q = state.inflowD[day];
-        const col = trip.result === 'blown' ? '#dc2626' : '#16a34a';
-        const d = new Date(trip.t);
-        return `<div class="trip"><span class="tdot" style="background:${col}"></span>
-          <span class="td">${d.toLocaleDateString([], { month: 'numeric', day: 'numeric' })}</span>
-          <span class="tn">${trip.note}</span>
-          <span class="tq">${q != null ? fmtNum(q) + ' cfs avg' : ''}</span></div>`;
-      }).join('');
     }
 
     // ─── CONTROLS ──────────────────────────────────────────────────────────────
@@ -1019,6 +1011,14 @@
         document.querySelectorAll('[data-fwd]').forEach(x => x.classList.toggle('on', x === b));
       }
       buildAllCharts(STATE);
+    });
+
+    $('rain-pills').addEventListener('click', e => {
+      const b = e.target.closest('.pill');
+      if (!b || !STATE || !b.dataset.rpast) return;
+      rainView.past = parseInt(b.dataset.rpast);
+      document.querySelectorAll('[data-rpast]').forEach(x => x.classList.toggle('on', x === b));
+      buildRainChart(STATE);
     });
 
     // ─── BOOT ──────────────────────────────────────────────────────────────────
@@ -1051,7 +1051,6 @@
       renderStats(state);
       renderOutlook(state);
       renderGauges(state);
-      renderTrips(state);
       buildAllCharts(state);
       stepDone('ls-build');
 
