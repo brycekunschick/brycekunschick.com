@@ -10,3 +10,5 @@ yarn-debug.log
 # Operating System Files
 .DS_Store
 Thumbs.db
+# Claude Code local dev config
+.claude/
