@@ -290,7 +290,7 @@
         </div>
       </div>
       <div class="chart-box"><canvas id="flowChart"></canvas></div>
-      <div class="legend-note">● green / red dots = <b>your logged trips</b> · dashed = NWS forecast (5-day horizon) · verdict thresholds: <b>&lt;3k</b> good · <b>3–7k</b> caution · <b>&gt;7k</b> blown out</div>
+      <div class="legend-note">dashed = NWS forecast (5-day horizon) · verdict thresholds: <b>&lt;3k</b> good · <b>3–7k</b> caution · <b>&gt;7k</b> blown out</div>
     </div>
 
     <!-- rain chart -->
@@ -764,55 +764,50 @@
 
     function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
 
+    // day-aligned tick timestamps across a time range (for a linear/time x-axis)
+    function dayTicks(minTs, maxTs, maxTicks = 8) {
+      const first = new Date(minTs); first.setHours(0, 0, 0, 0);
+      if (first.getTime() < minTs) first.setDate(first.getDate() + 1);
+      const totalDays = Math.floor((maxTs - first.getTime()) / 86400000) + 1;
+      const step = Math.max(1, Math.ceil(totalDays / maxTicks));
+      const out = [];
+      for (const t = new Date(first); t.getTime() <= maxTs; t.setDate(t.getDate() + step)) out.push(t.getTime());
+      return out;
+    }
+
     function buildFlowChart(state) {
       destroyChart('flow');
       const hourly = view.past <= 14;
       const now = new Date();
-      const keys = [], hist = [], fcast = [];
 
+      // observed inflow as {x: timestamp, y: cfs} — real time on the x-axis so
+      // equal time spans occupy equal width regardless of sample density
+      const hist = [];
       if (hourly) {
         const cut = hourKey(addDays(now, -view.past));
-        for (const [k, v] of state.inflowH.entries()) if (k >= cut) { keys.push(k); hist.push(v); fcast.push(null); }
+        for (const [k, v] of state.inflowH.entries())
+          if (k >= cut) hist.push({ x: new Date(k.replace('T', ' ') + ':00').getTime(), y: v });
       } else {
         const cut = isoDate(addDays(now, -view.past));
-        for (const [d, v] of Object.entries(state.inflowD).sort()) if (d >= cut) { keys.push(d); hist.push(v); fcast.push(null); }
+        for (const [d, v] of Object.entries(state.inflowD).sort())
+          if (d >= cut) hist.push({ x: new Date(d + 'T12:00').getTime(), y: v });
       }
-      const lastHistIdx = keys.length - 1;
 
-      // forecast extension (NWS horizon is ~5 days; +10D just widens the axis for rain context)
+      // NWS forecast, bridged onto the end of the observed line so the dashed
+      // segment spans its true 5-day width on the same time axis
+      const fcast = [];
       if (view.fwd > 0 && state.pmaw2?.fc?.length) {
-        const limit = addDays(now, view.fwd);
-        if (hourly) {
-          for (const p of state.pmaw2.fc) {
-            if (p.t > limit) break;
-            keys.push(hourKey(p.t)); hist.push(null); fcast.push(p.cfs);
-          }
-        } else {
-          const byDay = {};
-          for (const p of state.pmaw2.fc) {
-            if (p.t > limit) continue;
-            const d = isoDate(p.t);
-            (byDay[d] = byDay[d] || []).push(p.cfs);
-          }
-          for (const d of Object.keys(byDay).sort()) {
-            keys.push(d); hist.push(null);
-            fcast.push(byDay[d].reduce((a, b) => a + b, 0) / byDay[d].length);
-          }
+        const limit = addDays(now, view.fwd).getTime();
+        if (hist.length) fcast.push(hist[hist.length - 1]);
+        for (const p of state.pmaw2.fc) {
+          const ts = p.t.getTime();
+          if (ts > limit) break;
+          fcast.push({ x: ts, y: p.cfs });
         }
-        if (lastHistIdx >= 0 && fcast.length > lastHistIdx + 1) fcast[lastHistIdx] = hist[lastHistIdx]; // visually connect
-
       }
 
-      // trip markers
-      const tripPts = [], tripColors = [], tripMeta = [];
-      for (const trip of TRIPS) {
-        const k = hourly ? trip.t.slice(0, 13) + ':00' : trip.t.slice(0, 10);
-        const i = keys.indexOf(k);
-        if (i < 0) continue;
-        tripPts.push({ x: i, y: hist[i] ?? fcast[i] });
-        tripColors.push(trip.result === 'blown' ? '#dc2626' : '#16a34a');
-        tripMeta.push(trip.note);
-      }
+      const allTs = hist.concat(fcast).map(p => p.x);
+      const minTs = Math.min(...allTs), maxTs = Math.max(...allTs);
 
       const ctx = $('flowChart').getContext('2d');
       const grad = ctx.createLinearGradient(0, 0, 0, 320);
@@ -822,39 +817,39 @@
       charts.flow = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: keys.map(labelFromKey),
           datasets: [
             {
               label: 'Inflow (observed)', data: hist, borderColor: '#1d6fe0', backgroundColor: grad,
-              fill: true, borderWidth: 2.2, pointRadius: 0, tension: .3, spanGaps: false,
+              fill: true, borderWidth: 2.2, pointRadius: 0, tension: .3,
             },
             {
               label: 'NWS forecast', data: fcast, borderColor: '#0ea5e9', borderDash: [6, 4],
-              borderWidth: 2, pointRadius: 0, tension: .3, fill: false, spanGaps: false,
-            },
-            {
-              label: 'Your trips', type: 'scatter', data: tripPts, pointBackgroundColor: tripColors,
-              pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 6.5, pointHoverRadius: 8,
-              tripMeta,
+              borderWidth: 2, pointRadius: 0, tension: .3, fill: false,
             },
           ],
         },
         options: {
-          responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+          responsive: true, maintainAspectRatio: false, interaction: { mode: 'nearest', axis: 'x', intersect: false },
           plugins: {
             legend: { display: false },
             tooltip: {
               ...TT_STYLE,
               callbacks: {
-                label: c => {
-                  if (c.dataset.type === 'scatter') return ` 🎣 ${c.dataset.tripMeta[c.dataIndex]}`;
-                  return c.parsed.y == null ? null : ` ${c.dataset.label}: ${fmtNum(c.parsed.y)} cfs`;
-                },
+                title: items => new Date(items[0].parsed.x).toLocaleString([], { month: 'numeric', day: 'numeric', hour: 'numeric' }),
+                label: c => c.parsed.y == null ? null : ` ${c.dataset.label}: ${fmtNum(c.parsed.y)} cfs`,
               },
             },
           },
           scales: {
-            x: { ticks: { maxTicksLimit: 10, maxRotation: 0 }, grid: { display: false } },
+            x: {
+              type: 'linear', min: minTs, max: maxTs,
+              afterBuildTicks: axis => { axis.ticks = dayTicks(minTs, maxTs).map(value => ({ value })); },
+              ticks: {
+                autoSkip: false, maxRotation: 0,
+                callback: v => { const d = new Date(v); return `${d.getMonth() + 1}/${d.getDate()}`; },
+              },
+              grid: { display: false },
+            },
             y: { beginAtZero: true, title: { display: true, text: 'cfs' }, ticks: { callback: v => v >= 1000 ? (v / 1000) + 'k' : v } },
           },
         },
