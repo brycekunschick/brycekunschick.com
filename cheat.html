@@ -177,7 +177,7 @@
     .fp-note { font-size: 12.5px; color: var(--muted); margin-top: 12px; padding: 11px 14px; background: #f2f8ff; border-radius: 12px; border: 1px solid #ddebfa; line-height: 1.55; }
 
     /* ── gauges grid ────────────────────────────────────── */
-    .gauges { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 16px; }
+    .gauges { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
     .gauge {
       border: 1px solid var(--line); border-radius: 16px; padding: 15px 15px 11px; background: #fbfdff;
       transition: transform .22s ease, box-shadow .22s ease;
@@ -212,8 +212,6 @@
       .stat .d { font-size: 10.5px; }
       .outlook { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; -webkit-overflow-scrolling: touch; }
       .outlook .day { flex: 0 0 96px; }
-      .gauges { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; -webkit-overflow-scrolling: touch; }
-      .gauges .gauge { flex: 0 0 200px; scroll-snap-align: start; }
     }
   </style>
 </head>
@@ -316,24 +314,6 @@
       <div class="chart-box short"><canvas id="lakeChart"></canvas></div>
     </div>
 
-    <!-- how water moves -->
-    <div class="card reveal">
-      <h3>Riverwater Path</h3>
-      <div class="flowpath">
-        <div class="fp-node"><div class="ic">🌧️</div><div class="nm">Rain in the basin</div><div class="tm">Canaan · Dry Fork · Shavers Fk headwaters</div></div>
-        <div class="fp-arrow">➜</div>
-        <div class="fp-node"><div class="ic">⛰️</div><div class="nm">Parsons</div><div class="tm">responds ~6–12 h after rain</div></div>
-        <div class="fp-arrow">➜</div>
-        <div class="fp-node"><div class="ic">🏞️</div><div class="nm">Albright</div><div class="tm">+6–7 h (measured, 7/21 storm)</div></div>
-        <div class="fp-arrow">➜</div>
-        <div class="fp-node"><div class="ic">🎣</div><div class="nm">Main lake</div><div class="tm">+6–18 h to push down-pool</div></div>
-      </div>
-      <div class="fp-note" id="lagnote">
-        <b>Total: rain → main lake ≈ 18–30 h.</b> After a blowout, the lake usually fishes again <b>~2–4 days after
-        Albright drops back under ~3,000 cfs</b> — mud settles from the top of the lake down.
-      </div>
-    </div>
-
     <!-- gauges -->
     <div class="card reveal">
       <h3>Gauges</h3>
@@ -341,12 +321,26 @@
       <div class="gauges" id="gauges"></div>
     </div>
 
+    <!-- how water moves -->
+    <div class="card reveal">
+      <h3>Riverwater Path</h3>
+      <div class="flowpath">
+        <div class="fp-node"><div class="nm">Rain in the basin</div><div class="tm">Canaan · Dry Fork · Shavers Fk headwaters</div></div>
+        <div class="fp-arrow">➜</div>
+        <div class="fp-node"><div class="nm">Parsons</div><div class="tm">responds ~6–12 h after rain</div></div>
+        <div class="fp-arrow">➜</div>
+        <div class="fp-node"><div class="nm">Albright</div><div class="tm">+6–7 h (measured, 7/21 storm)</div></div>
+        <div class="fp-arrow">➜</div>
+        <div class="fp-node"><div class="nm">Main lake</div><div class="tm">+6–18 h to push down-pool</div></div>
+      </div>
+      <div class="fp-note" id="lagnote">
+        <b>Total: rain → main lake ≈ 18–30 h.</b> After a blowout, the lake usually fishes again <b>~2–4 days after
+        Albright drops back under ~3,000 cfs</b> — mud settles from the top of the lake down.
+      </div>
+    </div>
+
     <p class="foot">
-      Data: <a href="https://waterdata.usgs.gov/monitoring-location/03070260/" target="_blank">USGS NWIS</a> (Albright,
-      Parsons, Rowlesburg, Big Sandy, Cheat Lake + basin rain gauges) ·
-      <a href="https://water.noaa.gov/gauges/PMAW2" target="_blank">NWS/NWPS PMAW2</a> lake-inflow forecast ·
-      <a href="https://open-meteo.com/" target="_blank">Open-Meteo</a> rain forecast.
-      Not an official forecast — sanity-check before driving out.
+      Data: USGS NWIS, NWS/NWPS PMAW2, Open-Meteo.
     </p>
   </div>
 
