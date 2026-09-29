@@ -1,171 +1,362 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="no-js">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bryce Kunschick | Home</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Bryce Kunschick</title>
+    <meta name="description"
+        content="Bryce Kunschick is a data automation developer and algorithmic trader from Canonsburg, PA. Explore his pixel town, or switch to the classic site.">
+    <meta name="theme-color" content="#2d5e36">
+    <script>
+        // Pick up where this visit left off: Site Mode goes straight to the classic site and Game Mode
+        // skips the title screen. A fresh visit, or a refresh, gets to choose again.
+        (function () {
+            var d = document.documentElement;
+            d.className = d.className.replace('no-js', 'js');
+            var mode = null;
+            var restart = null;
+            try {
+                mode = sessionStorage.getItem('bk-mode');
+                restart = sessionStorage.getItem('bk-restart');
+                sessionStorage.removeItem('bk-restart');
+            } catch (e) { /* storage unavailable */ }
+            var nav = window.performance && performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+            var refreshed = nav ? nav.type === 'reload' : !!(window.performance && performance.navigation && performance.navigation.type === 1);
+            // (Restart game reloads the page too, but goes straight back into the game)
+            if (refreshed && !restart) mode = null;
+            if (mode === 'site') { window.location.replace('site.html'); return; }
+            if (mode !== 'game') d.className += ' is-title';
+        })();
+    </script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/town.css">
     <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png">
     <link rel="manifest" href="img/site.webmanifest">
+    <script src="js/town-art.js" defer></script>
+    <script src="js/town.js" defer></script>
 </head>
 
 <body>
+    <a class="skip-link" href="site.html" data-mode="site">Skip the game: go to Site Mode</a>
 
-    <header class="navbar">
-        <div class="container nav-container">
+    <canvas id="town" role="img"
+        aria-label="A pixel-art town you can walk around. Buildings lead to Bryce's story, projects, fishing dashboard, and contact details."></canvas>
 
-            <div class="hamburger">
-                <span class="bar"></span>
-                <span class="bar"></span>
-                <span class="bar"></span>
+    <!-- Title screen -->
+    <div class="title-screen" role="dialog" aria-labelledby="title-name">
+        <div class="title-card">
+            <p class="title-name" id="title-name">Bryce Kunschick</p>
+            <p class="title-sub"><span>Data automation developer ·</span> <span>Algorithmic trader</span></p>
+            <div class="title-modes">
+                <button class="mode mode-game box" type="button" data-mode="game">
+                    <svg viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M3 4h10v1h1v1h1v5h-1v1h-3v-1H5v1H2v-1H1V6h1V5h1zM4 7v1H3v1h1v1h1V9h1V8H5V7zm7 0v1h1V7zm-1 2v1h1V9zm2 0v1h1V9z" />
+                    </svg>
+                    <strong>Game Mode</strong>
+                </button>
+                <a class="mode mode-site box" href="site.html" data-mode="site">
+                    <svg viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M2 2h12v12H2zm1 3v8h10V5zm1-2v1h1V3zm2 0v1h1V3zm2 0v1h1V3zM4 7h6v1H4zm0 2h8v1H4zm0 2h5v1H4z" />
+                    </svg>
+                    <strong>Site Mode</strong>
+                </a>
             </div>
+            <p class="title-hint">You can switch any time.</p>
+        </div>
+    </div>
 
-            <a href="#" class="logo">
-                <span class="logo-initials">BK</span>
-                <span class="logo-text">Bryce Kunschick</span>
-            </a>
+    <!-- Top bar -->
+    <header class="hud-top">
+        <div class="hud-left">
+            <div class="nameplate box">
+                <h1>Bryce Kunschick</h1>
+                <p>Data automation developer · Algorithmic trader</p>
+            </div>
+            <aside class="tracker box" aria-label="Quests">
+                <button class="tracker-head" type="button" aria-expanded="true">
+                    <span>Quests</span><span class="tracker-count">0/4</span><span class="tracker-caret" aria-hidden="true"></span>
+                </button>
+                <ul class="tracker-list"></ul>
+                <button class="tracker-journal" type="button" data-open="journal">Open journal (J)</button>
+            </aside>
+        </div>
 
-            <a href="contact.html" class="mobile-contact-btn">Contact</a>
-
-            <nav class="nav-menu">
-                <a href="index.html" class="nav-link">Home</a>
-                <a href="about.html" class="nav-link">About Me</a>
-                <a href="fishing-dashboard.html" class="nav-link">Fishing Dashboard</a>
-                <a href="my-projects.html" class="nav-link">My Projects</a>
-                <a href="contact.html" class="nav-link btn-nav-cta desktop-cta">Contact</a>
+        <div class="hud-right">
+            <nav class="tabs" aria-label="Pages">
+                <a class="tab box" href="about.html" data-spot="house">About</a>
+                <a class="tab box" href="my-projects.html" data-spot="lab">Projects</a>
+                <a class="tab box" href="fishing-dashboard.html" data-spot="dock">Fishing Dashboard</a>
+                <a class="tab box" href="contact.html" data-spot="post">Contact</a>
             </nav>
+            <button class="icon-btn box" type="button" id="time-toggle" aria-pressed="false"
+                aria-label="Switch to night">
+                <svg class="i-sun" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M7 1h2v2H7zM7 13h2v2H7zM1 7h2v2H1zM13 7h2v2h-2zM3 3h2v2H3zM11 3h2v2h-2zM3 11h2v2H3zM11 11h2v2h-2zM6 5h4v1h1v4h-1v1H6v-1H5V6h1z" />
+                </svg>
+                <svg class="i-moon" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M6 1h4v1H8v1H7v2H6v5h1v2h1v1h2v1h3v1h-1v1H6v-1H4v-1H3v-1H2V9H1V6h1V4h1V3h1V2h2z" />
+                </svg>
+            </button>
+            <button class="menu-btn box" type="button" aria-expanded="false" aria-controls="menu">Menu</button>
+        </div>
 
+        <div class="menu box" id="menu" hidden>
+            <a href="about.html"><span aria-hidden="true">▶</span>About</a>
+            <a href="my-projects.html"><span aria-hidden="true">▶</span>Projects</a>
+            <a href="fishing-dashboard.html"><span aria-hidden="true">▶</span>Fishing Dashboard</a>
+            <a href="contact.html"><span aria-hidden="true">▶</span>Contact</a>
+            <a href="alto.html"><span aria-hidden="true">▶</span>ALTO Research</a>
+            <button type="button" data-open="journal"><span aria-hidden="true">▶</span>Journal</button>
+            <button type="button" data-open="restart"><span aria-hidden="true">▶</span>Restart game</button>
+            <a href="site.html" data-mode="site"><span aria-hidden="true">▶</span>Site Mode</a>
         </div>
     </header>
 
-    <section id="home" class="hero">
-        <div class="container hero-container">
+    <!-- Location banner shown when you arrive somewhere -->
+    <div class="location box" aria-hidden="true">brycekunschick.com</div>
 
-            <div class="hero-text fade-in-up">
-                <h1>Hi, I'm <br> <span class="highlight">Bryce Kunschick</span></h1>
+    <!-- Quest and item pop-ups -->
+    <div class="toast box" role="status" hidden></div>
+    <div class="fishcard box" hidden>
+        <canvas></canvas>
+        <div><strong></strong><span></span></div>
+    </div>
 
-                <div class="role-container">
-                    <span class="role-bubble">Algorithmic Trader</span>
-                    <span class="role-bubble">Data Automation Developer</span>
-                </div>
+    <!-- Controls hint -->
+    <div class="hint box" hidden>
+        <p class="hint-keys">
+            <span><kbd>WASD</kbd> or <kbd>Arrows</kbd> walk</span>
+            <span><kbd>Enter</kbd> talk</span>
+            <span><kbd>J</kbd> journal</span>
+            <span>Click anywhere to walk there</span>
+        </p>
+        <p class="hint-touch">Tap anywhere to walk there. Tap people, signs, and doors to check them out.</p>
+    </div>
 
-                <p class="intro-text">
-                    Welcome to my website! Here you can learn more about me and the projects I am working on.
-                    I am passionate about data automation and algorithmic trading.
-                    Please feel free to reach out to my email!
-                </p>
+    <div class="corner-btns">
+        <button class="restart-btn box" type="button" data-open="restart">Restart game</button>
+        <a class="site-btn box" href="site.html" data-mode="site">Site Mode</a>
+    </div>
+    <button class="skip-intro box" type="button" hidden>Skip intro</button>
 
-                <div class="button-grid">
-                    <a href="about.html" class="btn btn-primary">About Me</a>
-                    <a href="my-projects.html" class="btn btn-outline">My Projects</a>
-                    <a href="fishing-dashboard.html" class="btn btn-outline">Fishing Dashboard</a>
-                    <a href="alto.html" class="btn btn-accent">ALTO Research</a>
-                </div>
+    <!-- Hover label for things on the map -->
+    <div class="tooltip" hidden></div>
+
+    <!-- Speech box -->
+    <div class="dialog" hidden>
+        <div class="dialog-face box" hidden><canvas width="24" height="24"></canvas></div>
+        <span class="dialog-name box" hidden></span>
+        <div class="dialog-box box">
+            <p class="dialog-text" aria-hidden="true"></p>
+            <span class="dialog-next" aria-hidden="true"><span class="dialog-key">(Enter)</span><span class="dialog-arrow"></span></span>
+        </div>
+        <div class="dialog-choices box" role="menu" hidden></div>
+    </div>
+    <p class="sr-only" aria-live="polite" id="dialog-live"></p>
+
+    <!-- Touch controls -->
+    <div class="pad" aria-hidden="true">
+        <button type="button" class="pad-btn pad-up" data-dir="up" tabindex="-1"></button>
+        <button type="button" class="pad-btn pad-left" data-dir="left" tabindex="-1"></button>
+        <button type="button" class="pad-btn pad-right" data-dir="right" tabindex="-1"></button>
+        <button type="button" class="pad-btn pad-down" data-dir="down" tabindex="-1"></button>
+    </div>
+    <button type="button" class="pad-a" aria-hidden="true" tabindex="-1">A</button>
+
+    <!-- Panels: what you find on the boards and screens around town -->
+    <div class="backdrop" hidden></div>
+
+    <section class="panel box" id="panel-about" role="dialog" aria-modal="true" aria-labelledby="about-title" hidden>
+        <header class="panel-head">
+            <div>
+                <p class="panel-kicker">Bryce's House</p>
+                <h2 id="about-title">About me</h2>
             </div>
-
-            <div class="hero-visual fade-in-up delay-1">
-                <div class="portrait-wrapper">
-                    <img src="img/portrait.png" alt="Bryce Kunschick" class="portrait">
-                </div>
-                <div class="hero-socials">
-                    <a href="https://github.com/brycekunschick" target="_blank" aria-label="Github">
-                        <i class="fab fa-github"></i>
-                    </a>
-                    <a href="https://www.linkedin.com/in/brycekunschick/" target="_blank" aria-label="LinkedIn">
-                        <i class="fab fa-linkedin"></i>
-                    </a>
-                </div>
+            <button class="panel-close" type="button" aria-label="Close">×</button>
+        </header>
+        <div class="panel-body">
+            <p>I grew up in Canonsburg, PA and studied Management Information Systems at West Virginia University,
+                with minors in Finance and Data Analytics. Outside of class, most weekends meant hiking and fishing in
+                the mountains nearby.</p>
+            <ol class="timeline">
+                <li><span class="when">2025 –</span>
+                    <div><strong>Data Solutions Specialist, Maxim Crane Works</strong>
+                        <p>Power BI reports and cloud data architecture for teams across the business.</p>
+                    </div>
+                </li>
+                <li><span class="when">2024 – 25</span>
+                    <div><strong>Business Intelligence Developer, Halliburton</strong>
+                        <p>Automated accounting processes with Alteryx workflows on SAP ECC and S/4, and built Power
+                            BI reports for data-driven decisions.</p>
+                    </div>
+                </li>
+                <li><span class="when">2023</span>
+                    <div><strong>Finance Technology Intern, Halliburton</strong>
+                        <p>Researched the upcoming SAP ERP migration and helped implement SAP Concur for travel and
+                            expenses.</p>
+                    </div>
+                </li>
+                <li><span class="when">2020 – 24</span>
+                    <div><strong>West Virginia University</strong>
+                        <p>Management Information Systems, minors in Finance and Data Analytics.</p>
+                    </div>
+                </li>
+                <li><span class="when">2016 – 20</span>
+                    <div><strong>Canon-McMillan High School</strong>
+                        <p>Played on the baseball team and worked at TopGolf.</p>
+                    </div>
+                </li>
+            </ol>
+            <div class="panel-actions">
+                <a class="btn box" href="about.html">Read the full story ▶</a>
             </div>
         </div>
     </section>
 
-    <section id="focus" class="focus-section">
-        <div class="container">
-            <div class="section-header fade-in-up">
-                <h3>What I’m focused on</h3>
-                <p>Data pipelines, automation, and research-based trading</p>
+    <section class="panel box" id="panel-projects" role="dialog" aria-modal="true" aria-labelledby="projects-title"
+        hidden>
+        <header class="panel-head">
+            <div>
+                <p class="panel-kicker">Project Lab</p>
+                <h2 id="projects-title">Things I've built</h2>
             </div>
-
-            <div class="cards-grid">
-                <div class="card fade-in-up delay-1">
-                    <div class="icon-box">
-                        <i class="fas fa-cloud-upload-alt"></i>
+            <button class="panel-close" type="button" aria-label="Close">×</button>
+        </header>
+        <div class="panel-body">
+            <ul class="projects">
+                <li>
+                    <div class="project-top"><strong>Options Trading Algorithm</strong><span class="when">Jul 2024
+                            –</span></div>
+                    <p>Pulls live options quotes from the Robinhood API, spots pricing inefficiencies, and places
+                        limit orders automatically.</p>
+                    <a href="https://github.com/brycekunschick/OptionsAlgo" target="_blank" rel="noopener">View on
+                        GitHub ↗</a>
+                </li>
+                <li>
+                    <div class="project-top"><strong>Equities Trading Algorithms</strong><span class="when">Sep 2024
+                            –</span></div>
+                    <p>Low-frequency strategies, backtested for returns and max drawdowns, then deployed to trade
+                        automatically.</p>
+                    <span class="muted">Private repository</span>
+                </li>
+                <li>
+                    <div class="project-top"><strong>Fishing Database</strong><span class="when">Aug 2023
+                            –</span></div>
+                    <p>Every catch stored in SQL Server and linked to the weather for that place and time. It powers
+                        the Fishing Dashboard.</p>
+                    <a href="https://github.com/brycekunschick/FishingData" target="_blank" rel="noopener">View on
+                        GitHub ↗</a>
+                </li>
+                <li>
+                    <div class="project-top"><strong>AI Fishing Report</strong><span class="when">Apr 2025</span>
                     </div>
-                    <h4>Data Automation</h4>
-                    <p>Designing automated workflows that connect APIs, databases, and analytics tools.</p>
-                    <a href="my-projects.html" class="card-link">Explore Automation Work <i
-                            class="fas fa-arrow-right"></i></a>
-                </div>
-
-                <div class="card fade-in-up delay-2">
-                    <div class="icon-box">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <h4>Algorithmic Trading</h4>
-                    <p>Develop automated trading strategies based on quantitative research.</p>
-                    <a href="my-projects.html" class="card-link">View Projects <i class="fas fa-arrow-right"></i></a>
-                </div>
-
-                <div class="card fade-in-up delay-3">
-                    <div class="icon-box">
-                        <i class="fas fa-fish"></i>
-                    </div>
-                    <h4>Fishing Analytics</h4>
-                    <p>A full fishing database project with water-level data, weather, and catch logs in one place.</p>
-                    <a href="fishing-dashboard.html" class="card-link">See the dashboard <i
-                            class="fas fa-arrow-right"></i></a>
-                </div>
+                    <p>Scrapes live USGS and NWS data, then has a local LLM write a fishing report for each spot.</p>
+                    <a href="https://github.com/brycekunschick/FishingReport" target="_blank" rel="noopener">View on
+                        GitHub ↗</a>
+                </li>
+            </ul>
+            <div class="panel-actions">
+                <a class="btn box" href="my-projects.html">See all projects ▶</a>
             </div>
         </div>
     </section>
 
-    <footer>
-        <div class="container footer-container">
-            <div class="footer-left">
-                <p>&copy; 2025 Bryce Kunschick</p>
-                <a href="mailto:kunschickbryce@gmail.com" class="footer-email">kunschickbryce@gmail.com</a>
+    <section class="panel box" id="panel-contact" role="dialog" aria-modal="true" aria-labelledby="contact-title"
+        hidden>
+        <header class="panel-head">
+            <div>
+                <p class="panel-kicker">Post Office</p>
+                <h2 id="contact-title">Get in touch</h2>
             </div>
-            <div class="footer-right">
-                <a href="https://www.linkedin.com/in/brycekunschick/" target="_blank"><i
-                        class="fab fa-linkedin"></i></a>
-                <a href="https://github.com/brycekunschick" target="_blank"><i class="fab fa-github"></i></a>
+            <button class="panel-close" type="button" aria-label="Close">×</button>
+        </header>
+        <div class="panel-body">
+            <p>The fastest way to reach me is email.</p>
+            <a class="big-link" href="mailto:kunschickbryce@gmail.com">kunschickbryce@gmail.com</a>
+            <div class="panel-actions">
+                <a class="btn box" href="https://www.linkedin.com/in/brycekunschick/" target="_blank"
+                    rel="noopener">LinkedIn ↗</a>
+                <a class="btn box" href="https://github.com/brycekunschick" target="_blank" rel="noopener">GitHub ↗</a>
+                <a class="btn box" href="contact.html">Contact form ▶</a>
             </div>
         </div>
-    </footer>
+    </section>
 
-    <script>
-        // Mobile Menu Toggle
-        const hamburger = document.querySelector(".hamburger");
-        const navMenu = document.querySelector(".nav-menu");
+    <section class="panel box" id="panel-journal" role="dialog" aria-modal="true" aria-labelledby="journal-title"
+        hidden>
+        <header class="panel-head">
+            <div>
+                <p class="panel-kicker">Journal</p>
+                <h2 id="journal-title">Quests and catches</h2>
+            </div>
+            <button class="panel-close" type="button" aria-label="Close">×</button>
+        </header>
+        <div class="panel-body">
+            <ul class="journal-quests"></ul>
+            <h3 class="journal-sub">Fish log</h3>
+            <div class="journal-fish"></div>
+        </div>
+    </section>
 
-        hamburger.addEventListener("click", () => {
-            hamburger.classList.toggle("active");
-            navMenu.classList.toggle("active");
-        });
+    <section class="panel box panel-report" id="panel-report" role="dialog" aria-modal="true"
+        aria-labelledby="report-title" hidden>
+        <header class="panel-head">
+            <div>
+                <p class="panel-kicker">Fishing Dock</p>
+                <h2 id="report-title">Fishing report</h2>
+            </div>
+            <button class="panel-close" type="button" aria-label="Close">×</button>
+        </header>
+        <div class="panel-body">
+            <p class="report-intro">Live water numbers from the spots I fish.</p>
+            <div class="report-rivers" role="group" aria-label="Spot">
+                <button class="report-river box" type="button" data-river="cheat" aria-pressed="false">Cheat Lake</button>
+                <button class="report-river box" type="button" data-river="ohio" aria-pressed="false">Ohio River</button>
+            </div>
+            <div class="report-out" aria-live="polite"></div>
+        </div>
+    </section>
 
-        document.querySelectorAll(".nav-link").forEach(n => n.addEventListener("click", () => {
-            hamburger.classList.remove("active");
-            navMenu.classList.remove("active");
-        }));
+    <section class="panel box panel-small" id="panel-restart" role="alertdialog" aria-modal="true"
+        aria-labelledby="restart-title" aria-describedby="restart-question" hidden>
+        <header class="panel-head">
+            <div>
+                <h2 id="restart-title">Restart game</h2>
+            </div>
+            <button class="panel-close" type="button" aria-label="Close">×</button>
+        </header>
+        <div class="panel-body">
+            <p id="restart-question">Are you sure you want to restart the game?</p>
+            <p class="muted">Your quests, fish log, and spot in town will start over.</p>
+            <div class="panel-actions">
+                <button class="btn box" type="button" data-restart>Restart</button>
+                <button class="btn btn-quiet box" type="button" data-cancel data-autofocus>Cancel</button>
+            </div>
+        </div>
+    </section>
 
-        // Scroll Animation Observer
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        });
-
-        const hiddenElements = document.querySelectorAll('.fade-in-up');
-        hiddenElements.forEach((el) => observer.observe(el));
-    </script>
+    <noscript>
+        <main class="noscript box">
+            <h1>Bryce Kunschick</h1>
+            <p>Data automation developer and algorithmic trader from Canonsburg, PA. This page is a little town you
+                can walk around, but it needs JavaScript. Here's everything without it:</p>
+            <ul>
+                <li><a href="site.html">Site Mode (the classic website)</a></li>
+                <li><a href="about.html">About me</a></li>
+                <li><a href="my-projects.html">Projects</a></li>
+                <li><a href="fishing-dashboard.html">Fishing Dashboard</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="mailto:kunschickbryce@gmail.com">kunschickbryce@gmail.com</a></li>
+            </ul>
+        </main>
+    </noscript>
 </body>
 
 </html>

@@ -1,0 +1,1815 @@
+/* ==========================================================================
+   Bryce Kunschick — home page, Game Mode: the pixel town
+   The canvas fills the screen; everything here is the HUD drawn on top of it.
+   ========================================================================== */
+
+:root {
+    --ink: #262a36;
+    --paper: #fbfbf7;
+    --muted: #5d6474;
+    --line: #d9dce3;
+    --accent: #2753d6;
+    --accent-ink: #1a3da8;
+    --accent-soft: #d9e2fa;
+    --pixel: "Pixelify Sans", ui-monospace, "Cascadia Mono", Consolas, monospace;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    /* a phone on its side keeps the notch out of the way */
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #14161c;
+    color: var(--ink);
+    font-family: var(--pixel);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    touch-action: manipulation;
+}
+
+h1,
+h2,
+p,
+ol,
+ul {
+    margin: 0;
+    padding: 0;
+}
+
+ol,
+ul {
+    list-style: none;
+}
+
+button {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+/* A pixel window: dark frame, stepped corners, a thin blue inner line */
+.box {
+    background: var(--paper);
+    color: var(--ink);
+    border: 3px solid var(--ink);
+    border-radius: 0;
+    box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 4px var(--accent-soft);
+    clip-path: polygon(0 3px, 3px 3px, 3px 0, calc(100% - 3px) 0, calc(100% - 3px) 3px, 100% 3px,
+            100% calc(100% - 3px), calc(100% - 3px) calc(100% - 3px), calc(100% - 3px) 100%,
+            3px 100%, 3px calc(100% - 3px), 0 calc(100% - 3px));
+}
+
+.skip-link {
+    position: fixed;
+    left: 16px;
+    top: -80px;
+    z-index: 100;
+    padding: 10px 14px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 15px;
+}
+
+.skip-link:focus {
+    top: 12px;
+}
+
+#town,
+.pad,
+.pad-a,
+.dialog-box,
+.title-screen {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+#town {
+    position: fixed;
+    inset: 0;
+    display: block;
+    touch-action: none;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    outline: none;
+}
+
+/* --------------------------------------------------------------------------
+   Top bar
+   -------------------------------------------------------------------------- */
+
+.hud-top {
+    position: fixed;
+    top: calc(14px + var(--safe-top));
+    left: calc(16px + var(--safe-left));
+    right: calc(16px + var(--safe-right));
+    z-index: 20;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    pointer-events: none;
+}
+
+.hud-top > * {
+    pointer-events: auto;
+}
+
+.nameplate {
+    padding: 10px 16px 11px;
+}
+
+.nameplate h1 {
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+}
+
+.nameplate p {
+    margin-top: 3px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.hud-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tabs {
+    display: flex;
+    gap: 8px;
+}
+
+.tab {
+    display: inline-block;
+    padding: 10px 15px 9px;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    transition: transform 0.12s steps(2), background-color 0.12s steps(2);
+}
+
+.tab:hover,
+.tab:focus-visible {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: inset 0 0 0 2px var(--accent), inset 0 0 0 4px #5f84ea;
+    transform: translateY(-2px);
+}
+
+.icon-btn {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+}
+
+.icon-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+.icon-btn:hover {
+    background: var(--accent-soft);
+}
+
+.i-moon,
+.is-night .i-sun {
+    display: none;
+}
+
+.is-night .i-moon {
+    display: block;
+}
+
+.menu-btn {
+    display: none;
+    padding: 10px 14px 9px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.menu {
+    position: absolute;
+    right: 0;
+    top: 54px;
+    display: flex;
+    flex-direction: column;
+    min-width: 230px;
+    padding: 10px 8px;
+}
+
+.menu[hidden] {
+    display: none;
+}
+
+.menu a,
+.menu button {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 9px 10px;
+    font-size: 19px;
+    color: var(--ink);
+    text-decoration: none;
+    background: none;
+    border: 0;
+    text-align: left;
+}
+
+.menu span {
+    visibility: hidden;
+    color: var(--accent);
+    font-size: 13px;
+}
+
+.menu a:hover span,
+.menu a:focus-visible span,
+.menu button:hover span,
+.menu button:focus-visible span {
+    visibility: visible;
+}
+
+/* --------------------------------------------------------------------------
+   Banner, hint, buttons, tooltip
+   -------------------------------------------------------------------------- */
+
+.location {
+    position: fixed;
+    left: 50%;
+    top: calc(84px + var(--safe-top));
+    z-index: 15;
+    padding: 10px 22px 9px;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    pointer-events: none;
+    /* parked fully above the screen until it's shown */
+    transform: translate(-50%, calc(-100% - 160px - var(--safe-top)));
+    transition: transform 0.45s steps(6);
+}
+
+.location.is-shown {
+    transform: translate(-50%, 0);
+}
+
+.hint {
+    position: fixed;
+    pointer-events: none;
+    left: calc(16px + var(--safe-left));
+    bottom: calc(16px + var(--safe-bottom));
+    z-index: 15;
+    max-width: calc(100vw - 32px);
+    padding: 10px 14px 9px;
+    font-size: 14px;
+    transition: opacity 0.4s ease;
+}
+
+.hint.is-fading {
+    opacity: 0;
+}
+
+.hint-keys {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+}
+
+.hint-touch {
+    display: none;
+}
+
+kbd {
+    display: inline-block;
+    padding: 1px 5px 0;
+    margin-right: 2px;
+    border: 2px solid var(--ink);
+    background: #fff;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1.3;
+}
+
+.corner-btns {
+    position: fixed;
+    right: calc(16px + var(--safe-right));
+    bottom: calc(16px + var(--safe-bottom));
+    z-index: 15;
+    display: flex;
+    gap: 8px;
+}
+
+.site-btn,
+.restart-btn,
+.skip-intro {
+    padding: 9px 14px 8px;
+    font-size: 14px;
+}
+
+.skip-intro {
+    position: fixed;
+    right: calc(16px + var(--safe-right));
+    bottom: calc(64px + var(--safe-bottom));
+    z-index: 15;
+}
+
+.site-btn:hover,
+.restart-btn:hover,
+.skip-intro:hover {
+    background: var(--accent-soft);
+}
+
+/* (no restarting halfway through Bryce's hello) */
+.is-intro .restart-btn {
+    visibility: hidden;
+}
+
+.tooltip {
+    position: fixed;
+    z-index: 18;
+    padding: 4px 9px 3px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 14px;
+    white-space: nowrap;
+    pointer-events: none;
+    transform: translate(-50%, calc(-100% - 14px));
+}
+
+/* --------------------------------------------------------------------------
+   Speech box
+   -------------------------------------------------------------------------- */
+
+.dialog {
+    position: fixed;
+    left: 50%;
+    bottom: calc(20px + var(--safe-bottom));
+    z-index: 30;
+    width: min(780px, calc(100vw - 32px));
+    transform: translateX(-50%);
+}
+
+.dialog[hidden] {
+    display: none;
+}
+
+.dialog-name {
+    position: absolute;
+    left: 14px;
+    bottom: calc(100% - 3px);
+    padding: 6px 14px 4px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    box-shadow: inset 0 0 0 2px var(--accent), inset 0 0 0 4px #5f84ea;
+}
+
+.dialog-name[hidden] {
+    display: none;
+}
+
+.dialog-face {
+    position: absolute;
+    left: 14px;
+    bottom: calc(100% - 3px);
+    padding: 4px;
+    line-height: 0;
+}
+
+.dialog-face[hidden] {
+    display: none;
+}
+
+.dialog-face canvas {
+    width: 72px;
+    height: 72px;
+    image-rendering: pixelated;
+}
+
+.has-face .dialog-name {
+    left: 104px;
+}
+
+/* he pops up when he starts talking */
+.dialog-face.is-popping {
+    animation: face-pop 0.28s steps(4);
+}
+
+@keyframes face-pop {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    @keyframes face-pop {
+        from {
+            opacity: 0;
+        }
+    }
+}
+
+.dialog-box {
+    position: relative;
+    min-height: 118px;
+    padding: 20px 28px 24px;
+    cursor: pointer;
+}
+
+.dialog-text {
+    font-size: 22px;
+    line-height: 1.42;
+    white-space: pre-line;
+}
+
+.dialog-next {
+    position: absolute;
+    right: 20px;
+    bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    opacity: 0;
+}
+
+.dialog-key {
+    font-size: 14px;
+    line-height: 1;
+    color: var(--muted);
+}
+
+/* on phones you tap, so the keyboard hint would only be noise */
+.is-touch .dialog-key {
+    display: none;
+}
+
+.dialog-arrow {
+    width: 14px;
+    height: 10px;
+    background: var(--accent);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+.dialog.is-waiting .dialog-next {
+    opacity: 1;
+}
+
+.dialog.is-waiting .dialog-arrow {
+    animation: nudge 0.8s steps(2) infinite;
+}
+
+@keyframes nudge {
+    50% {
+        transform: translateY(3px);
+    }
+}
+
+.dialog-choices {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 10px);
+    display: flex;
+    flex-direction: column;
+    padding: 10px 8px;
+    min-width: 240px;
+}
+
+.dialog-choices[hidden] {
+    display: none;
+}
+
+.dialog-choices button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border: 0;
+    background: none;
+    font-size: 20px;
+    text-align: left;
+}
+
+.dialog-choices button::before {
+    content: "▶";
+    font-size: 13px;
+    color: var(--accent);
+    visibility: hidden;
+}
+
+.dialog-choices button.is-selected::before {
+    visibility: visible;
+}
+
+.dialog-choices button:focus-visible {
+    outline: none;
+}
+
+/* --------------------------------------------------------------------------
+   Touch pad
+   -------------------------------------------------------------------------- */
+
+.pad,
+.pad-a {
+    display: none;
+}
+
+.is-touch .pad {
+    position: fixed;
+    left: calc(18px + var(--safe-left));
+    bottom: calc(24px + var(--safe-bottom));
+    z-index: 12;
+    display: grid;
+    grid-template: repeat(3, 46px) / repeat(3, 46px);
+}
+
+.pad-btn {
+    border: 3px solid rgba(20, 22, 30, 0.75);
+    background: rgba(251, 251, 247, 0.72);
+    padding: 0;
+    position: relative;
+    touch-action: none;
+}
+
+.pad-btn::after {
+    content: "";
+    position: absolute;
+    inset: 13px;
+    background: var(--ink);
+}
+
+.pad-up { grid-area: 1 / 2; }
+.pad-left { grid-area: 2 / 1; }
+.pad-right { grid-area: 2 / 3; }
+.pad-down { grid-area: 3 / 2; }
+
+.pad-up::after { clip-path: polygon(50% 15%, 100% 85%, 0 85%); }
+.pad-down::after { clip-path: polygon(0 15%, 100% 15%, 50% 85%); }
+.pad-left::after { clip-path: polygon(15% 50%, 85% 0, 85% 100%); }
+.pad-right::after { clip-path: polygon(15% 0, 85% 50%, 15% 100%); }
+
+.pad-btn.is-down {
+    background: var(--accent-soft);
+}
+
+.is-touch .pad-a {
+    position: fixed;
+    right: calc(22px + var(--safe-right));
+    bottom: calc(52px + var(--safe-bottom));
+    z-index: 12;
+    display: grid;
+    place-items: center;
+    width: 66px;
+    height: 66px;
+    border: 3px solid var(--ink);
+    background: var(--accent);
+    color: #fff;
+    font-size: 26px;
+    font-weight: 700;
+    clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+    touch-action: none;
+}
+
+.pad-a.is-down {
+    background: var(--accent-ink);
+}
+
+.is-talking .pad,
+.is-talking .pad-a {
+    visibility: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Panels (inside the buildings)
+   -------------------------------------------------------------------------- */
+
+.backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: rgba(10, 14, 30, 0.55);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.backdrop.is-open {
+    opacity: 1;
+}
+
+.panel {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    z-index: 41;
+    width: min(660px, calc(100vw - 24px));
+    max-height: min(82vh, 760px);
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translate(-50%, -46%);
+    transition: opacity 0.22s ease, transform 0.3s steps(5);
+}
+
+.panel[hidden] {
+    display: none;
+}
+
+.panel.is-open {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+}
+
+.panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px 24px 14px;
+    background-image: linear-gradient(90deg, var(--line) 50%, transparent 50%);
+    background-size: 8px 3px;
+    background-repeat: repeat-x;
+    background-position: 0 100%;
+}
+
+.panel-kicker {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.panel h2 {
+    margin-top: 2px;
+    font-size: 30px;
+    font-weight: 600;
+    line-height: 1.1;
+}
+
+.panel-close {
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border: 3px solid var(--ink);
+    background: #fff;
+    font-size: 24px;
+    line-height: 1;
+    padding: 0 0 3px;
+}
+
+.panel-close:hover {
+    background: var(--accent);
+    color: #fff;
+}
+
+.panel-body {
+    padding: 18px 24px 24px;
+    overflow-y: auto;
+    outline: none;
+    font-size: 17px;
+    line-height: 1.5;
+}
+
+.panel-body > p {
+    margin-bottom: 16px;
+}
+
+.when {
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 15px;
+    white-space: nowrap;
+}
+
+.muted {
+    color: var(--muted);
+    font-size: 15px;
+}
+
+.timeline li {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 14px;
+    padding: 12px 0;
+    border-top: 2px dashed var(--line);
+}
+
+.timeline li p,
+.projects li p {
+    color: var(--muted);
+    font-size: 16px;
+}
+
+.timeline strong,
+.projects strong {
+    font-weight: 600;
+}
+
+.projects li {
+    padding: 14px 0;
+    border-top: 2px dashed var(--line);
+}
+
+.projects li:first-child,
+.timeline li:first-child {
+    border-top: 0;
+}
+
+.project-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: baseline;
+}
+
+.projects p {
+    margin: 4px 0 6px;
+}
+
+.panel-body a:not(.btn) {
+    color: var(--accent);
+    text-underline-offset: 3px;
+}
+
+.panel-body a:not(.btn):hover {
+    color: var(--accent-ink);
+}
+
+.big-link {
+    display: inline-block;
+    font-size: 26px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.panel-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 16px 9px;
+    font-size: 17px;
+    font-weight: 500;
+    text-decoration: none;
+    background: var(--accent);
+    color: #fff;
+    box-shadow: inset 0 0 0 2px var(--accent), inset 0 0 0 4px #5f84ea;
+}
+
+.btn:hover {
+    background: var(--accent-ink);
+    box-shadow: inset 0 0 0 2px var(--accent-ink), inset 0 0 0 4px #4a6fd8;
+}
+
+.overview {
+    margin-top: 4px;
+}
+
+.overview li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 14px;
+    padding: 11px 0;
+    border-top: 2px dashed var(--line);
+}
+
+.overview button,
+.overview a {
+    padding: 0;
+    border: 0;
+    background: none;
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.overview span {
+    color: var(--muted);
+    font-size: 15px;
+}
+
+.noscript {
+    position: fixed;
+    inset: 24px;
+    margin: auto;
+    max-width: 560px;
+    height: fit-content;
+    padding: 24px;
+    font-size: 18px;
+    line-height: 1.5;
+}
+
+.noscript h1 {
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+.noscript ul {
+    margin-top: 12px;
+}
+
+.noscript a {
+    color: var(--accent);
+}
+
+/* --------------------------------------------------------------------------
+   Small screens
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+    .tabs {
+        display: none;
+    }
+
+    .menu-btn {
+        display: block;
+    }
+}
+
+@media (max-width: 600px) {
+    .hud-top {
+        left: calc(10px + var(--safe-left));
+        right: calc(10px + var(--safe-right));
+        top: calc(10px + var(--safe-top));
+    }
+
+    .nameplate {
+        padding: 8px 12px 9px;
+    }
+
+    .nameplate h1 {
+        font-size: 18px;
+    }
+
+    .nameplate p {
+        font-size: 11px;
+    }
+
+    /* below the name and quest list, which stack up on a phone */
+    .location {
+        top: calc(142px + var(--safe-top));
+        font-size: 18px;
+    }
+
+    /* (Site Mode and Restart live in the menu here) */
+    .corner-btns {
+        display: none;
+    }
+
+    .dialog {
+        width: calc(100vw - 20px);
+        bottom: calc(12px + var(--safe-bottom));
+    }
+
+    .dialog-box {
+        min-height: 104px;
+        padding: 16px 18px 22px;
+    }
+
+    .dialog-text {
+        font-size: 18px;
+    }
+
+    .dialog-choices button {
+        font-size: 18px;
+    }
+
+    .panel-head {
+        padding: 16px 18px 12px;
+    }
+
+    .panel h2 {
+        font-size: 25px;
+    }
+
+    .panel-body {
+        padding: 14px 18px 20px;
+        font-size: 16px;
+    }
+
+    .timeline li {
+        grid-template-columns: 1fr;
+        gap: 2px;
+    }
+}
+
+.is-touch .hint {
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    top: calc(150px + var(--safe-top));
+    transform: translateX(-50%);
+    width: min(360px, calc(100vw - 24px));
+    text-align: center;
+}
+
+.is-touch .hint-keys {
+    display: none;
+}
+
+.is-touch .hint-touch {
+    display: block;
+}
+
+.is-touch .skip-intro {
+    bottom: auto;
+    top: calc(84px + var(--safe-top));
+}
+
+/* on touch screens Site Mode and Restart live in the menu, not down by the A button where a thumb could hit them */
+.is-touch .corner-btns {
+    display: none;
+}
+
+.is-touch .menu-btn {
+    display: block;
+}
+
+@media (max-width: 600px) {
+    .is-touch .hint {
+        top: calc(196px + var(--safe-top));
+    }
+}
+
+/* the narrowest phones: just the name up top, so the buttons fit beside it */
+@media (max-width: 340px) {
+    .nameplate h1 {
+        font-size: 17px;
+        white-space: nowrap;
+    }
+
+    .nameplate p {
+        display: none;
+    }
+
+    .location {
+        top: calc(112px + var(--safe-top));
+    }
+
+    .is-touch .hint {
+        top: calc(166px + var(--safe-top));
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Links styled as buttons
+   -------------------------------------------------------------------------- */
+
+.site-btn {
+    color: var(--ink);
+    text-decoration: none;
+}
+
+/* --------------------------------------------------------------------------
+   Top-left: nameplate and quest tracker
+   -------------------------------------------------------------------------- */
+
+.hud-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.hud-left > * {
+    pointer-events: auto;
+}
+
+.tracker {
+    width: 290px;
+    max-width: calc(100vw - 32px);
+    padding: 6px 10px 10px;
+}
+
+.tracker-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 4px 2px;
+    border: 0;
+    background: none;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: left;
+}
+
+.tracker-count {
+    margin-left: auto;
+    color: var(--accent);
+    font-size: 13px;
+}
+
+.tracker-caret {
+    width: 9px;
+    height: 6px;
+    background: var(--ink);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    transition: transform 0.15s steps(2);
+}
+
+.tracker.is-collapsed .tracker-caret {
+    transform: rotate(-90deg);
+}
+
+.tracker-list {
+    margin-top: 4px;
+    /* six quests can outgrow a short screen (a phone on its side); scroll instead of spilling off */
+    max-height: calc(100vh - 220px - var(--safe-top));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.tracker-list li,
+.journal-quests li {
+    position: relative;
+    padding: 5px 0 5px 18px;
+    border-top: 2px dashed var(--line);
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.tracker-list li::before,
+.journal-quests li::before {
+    content: "";
+    position: absolute;
+    left: 1px;
+    top: 9px;
+    width: 9px;
+    height: 9px;
+    border: 2px solid var(--ink);
+    background: #fff;
+}
+
+.tracker-list li.is-done::before,
+.journal-quests li.is-done::before {
+    background: var(--accent);
+    box-shadow: inset 0 0 0 2px #fff;
+}
+
+.tracker-list strong,
+.journal-quests strong {
+    display: block;
+    font-weight: 600;
+}
+
+.tracker-list span,
+.journal-quests span {
+    display: block;
+    color: var(--muted);
+}
+
+.tracker-list li.is-done strong {
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+    color: var(--muted);
+}
+
+.tracker-journal {
+    margin-top: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font-size: 13px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.tracker.is-collapsed .tracker-list,
+.tracker.is-collapsed .tracker-journal {
+    display: none;
+}
+
+.tracker.is-collapsed {
+    width: auto;
+    padding-bottom: 6px;
+}
+
+.tracker.is-collapsed .tracker-count {
+    margin-left: 10px;
+}
+
+/* --------------------------------------------------------------------------
+   Pop-ups: toast and fish card
+   -------------------------------------------------------------------------- */
+
+.toast {
+    position: fixed;
+    pointer-events: none;
+    left: 50%;
+    bottom: calc(70px + var(--safe-bottom));
+    z-index: 35;
+    max-width: min(520px, calc(100vw - 32px));
+    padding: 10px 18px 9px;
+    font-size: 17px;
+    font-weight: 500;
+    text-align: center;
+    transform: translate(-50%, 12px);
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.25s steps(4), bottom 0.2s steps(3);
+}
+
+/* sit above the speech box when someone is talking */
+.is-talking .toast {
+    bottom: calc(190px + var(--safe-bottom));
+}
+
+.is-talking.has-face .toast {
+    bottom: calc(260px + var(--safe-bottom));
+}
+
+.toast.is-shown {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+.toast[data-kind="win"] {
+    background: #fff6cf;
+}
+
+.toast[data-kind="tip"] {
+    background: #eef3ff;
+}
+
+.fishcard {
+    position: fixed;
+    pointer-events: none;
+    left: 50%;
+    bottom: calc(170px + var(--safe-bottom));
+    z-index: 31;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    transform: translate(-50%, 10px);
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.25s steps(4);
+}
+
+.fishcard.is-shown {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+.fishcard[hidden] {
+    display: none;
+}
+
+.fishcard canvas {
+    image-rendering: pixelated;
+    background: #dcefff;
+    border: 3px solid var(--ink);
+    padding: 6px;
+}
+
+.fishcard strong {
+    display: block;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.fishcard span {
+    display: block;
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.has-face .fishcard {
+    bottom: calc(250px + var(--safe-bottom));
+}
+
+/* --------------------------------------------------------------------------
+   Fishing report board
+   -------------------------------------------------------------------------- */
+
+.panel-report {
+    width: min(460px, calc(100vw - 24px));
+}
+
+.report-intro {
+    color: var(--muted);
+}
+
+.report-rivers {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.report-river {
+    flex: 1;
+    padding: 12px 10px 11px;
+    font-size: 18px;
+    font-weight: 600;
+    transition: transform 0.12s steps(2), background-color 0.12s steps(2);
+}
+
+.report-river[aria-pressed="true"] {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: inset 0 0 0 2px var(--accent), inset 0 0 0 4px #5f84ea;
+}
+
+@media (hover: hover) {
+    .report-river:hover:not([aria-pressed="true"]) {
+        background: var(--accent-soft);
+    }
+}
+
+.report-out:not(:empty) {
+    margin-top: 16px;
+}
+
+.report-loading {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    padding: 10px 0 6px;
+    color: var(--muted);
+}
+
+.report-loading canvas {
+    width: 192px;
+    height: 72px;
+    border: 3px solid var(--ink);
+    image-rendering: pixelated;
+}
+
+.report-dots::after {
+    content: "";
+    animation: dots 1.2s steps(4) infinite;
+}
+
+@keyframes dots {
+    0% { content: ""; }
+    25% { content: "."; }
+    50% { content: ".."; }
+    75% { content: "..."; }
+}
+
+.report-card {
+    padding: 14px 16px 12px;
+    border: 3px solid var(--ink);
+    background: #fff;
+}
+
+.report-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.report-chart {
+    display: block;
+    width: 100%;
+    height: 84px;
+    margin: 10px 0 8px;
+}
+
+.report-num {
+    font-size: 44px;
+    font-weight: 700;
+    line-height: 1.05;
+    color: var(--ink);
+}
+
+.report-num small {
+    margin-left: 8px;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--muted);
+}
+
+.report-delta {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.report-delta.is-up {
+    color: #c2410c;
+}
+
+.report-delta.is-down {
+    color: #15803d;
+}
+
+.report-src {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.report-say {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-top: 14px;
+}
+
+.report-say canvas {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border: 3px solid var(--ink);
+    image-rendering: pixelated;
+}
+
+.report-say p {
+    font-size: 16px;
+    line-height: 1.45;
+}
+
+.report-say strong {
+    display: block;
+    color: var(--accent);
+    font-size: 14px;
+}
+
+.report-error {
+    padding: 12px 0 2px;
+}
+
+.report-error .muted {
+    margin: 4px 0 14px;
+}
+
+/* short screens: keep the answer on screen without scrolling */
+@media (max-height: 520px) {
+    .report-intro {
+        display: none;
+    }
+
+    .report-rivers {
+        margin-top: 0;
+    }
+
+    .report-out:not(:empty) {
+        margin-top: 10px;
+    }
+
+    .report-card {
+        padding: 8px 12px;
+    }
+
+    .report-chart {
+        height: 48px;
+        margin: 6px 0 4px;
+    }
+
+    .report-num {
+        font-size: 30px;
+    }
+
+    .report-say {
+        margin-top: 8px;
+    }
+
+    .panel-report .panel-head {
+        padding: 12px 18px 8px;
+    }
+
+    .panel-report .panel-kicker,
+    .report-card .report-src {
+        display: none;
+    }
+}
+
+/* the narrowest phones */
+@media (max-width: 340px) {
+    .report-intro,
+    .panel-report .panel-kicker {
+        display: none;
+    }
+
+    .report-rivers {
+        margin-top: 0;
+    }
+
+    .report-river {
+        padding: 10px 6px 9px;
+        font-size: 15px;
+    }
+}
+
+/* a phone on its side: the numbers and Bryce's take sit side by side */
+@media (max-height: 520px) and (min-width: 600px) {
+    .panel-report {
+        width: min(660px, calc(100vw - 24px));
+    }
+
+    .report-out:not(:empty) {
+        display: grid;
+        grid-template-columns: 1.1fr 1fr;
+        gap: 14px;
+        align-items: start;
+    }
+
+    .report-out .report-say {
+        margin-top: 0;
+    }
+
+    .report-loading,
+    .report-error {
+        grid-column: 1 / -1;
+    }
+}
+
+/* a small yes/no box */
+.panel-small {
+    width: min(420px, calc(100vw - 24px));
+}
+
+.btn-quiet {
+    background: #fff;
+    color: var(--ink);
+    box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 4px var(--accent-soft);
+}
+
+.btn-quiet:hover {
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 2px var(--accent-soft), inset 0 0 0 4px #fff;
+}
+
+.panel-small .muted {
+    margin-top: 6px;
+}
+
+/* --------------------------------------------------------------------------
+   Journal
+   -------------------------------------------------------------------------- */
+
+.journal-quests li {
+    font-size: 16px;
+    padding: 9px 0 9px 22px;
+}
+
+.journal-quests li::before {
+    top: 14px;
+}
+
+.journal-sub {
+    margin: 22px 0 8px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.journal-fish {
+    overflow-x: auto;
+}
+
+.journal-fish table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+}
+
+.journal-fish th,
+.journal-fish td {
+    padding: 6px 10px 6px 0;
+    text-align: left;
+    border-top: 2px dashed var(--line);
+    white-space: nowrap;
+}
+
+.journal-fish th {
+    color: var(--muted);
+    font-weight: 500;
+    border-top: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Title screen
+   -------------------------------------------------------------------------- */
+
+.title-screen {
+    display: none;
+}
+
+.is-title .title-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: radial-gradient(ellipse at center, rgba(10, 14, 30, 0.2) 0%, rgba(10, 14, 30, 0.62) 100%);
+    transition: opacity 0.4s ease;
+}
+
+.is-leaving-title .title-screen {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.is-title .hud-top,
+.is-title .corner-btns,
+.is-title .hint,
+.is-title .pad,
+.is-title .pad-a,
+.is-title .skip-intro {
+    visibility: hidden;
+}
+
+.title-card {
+    text-align: center;
+    color: #fff;
+}
+
+
+.title-name {
+    margin-top: 4px;
+    font-size: clamp(44px, 9vw, 92px);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    text-shadow: 4px 4px 0 var(--accent-ink), 7px 7px 0 rgba(0, 0, 0, 0.35);
+}
+
+.title-sub span {
+    display: inline-block;
+}
+
+.title-sub {
+    margin-top: 14px;
+    font-size: clamp(16px, 2.4vw, 21px);
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+.title-modes {
+    display: flex;
+    justify-content: center;
+    gap: 22px;
+    margin-top: 40px;
+}
+
+.mode {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 240px;
+    padding: 24px 20px 20px;
+    color: var(--ink);
+    text-decoration: none;
+    border-width: 4px;
+    transition: transform 0.12s steps(2), background-color 0.12s steps(2);
+}
+
+.mode svg {
+    width: 48px;
+    height: 48px;
+    fill: var(--accent);
+    shape-rendering: crispEdges;
+}
+
+.mode strong {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+/* Light up on hover (mouse) or keyboard focus only, so neither button looks pre-picked */
+.mode:focus-visible {
+    outline: none;
+}
+
+.mode:focus-visible,
+.mode:active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: inset 0 0 0 2px var(--accent), inset 0 0 0 4px #5f84ea;
+}
+
+.mode:focus-visible {
+    transform: translateY(-4px);
+}
+
+.mode:focus-visible svg,
+.mode:active svg {
+    fill: #fff;
+}
+
+@media (hover: hover) {
+    .mode:hover {
+        transform: translateY(-4px);
+        background: var(--accent);
+        color: #fff;
+        box-shadow: inset 0 0 0 2px var(--accent), inset 0 0 0 4px #5f84ea;
+    }
+
+    .mode:hover svg {
+        fill: #fff;
+    }
+}
+
+.title-hint {
+    margin-top: 22px;
+    font-size: 15px;
+    color: #e6ebf7;
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* a phone on its side: tighten everything so the buttons stay on screen */
+@media (max-height: 520px) {
+
+    .title-name {
+        font-size: clamp(36px, 7vw, 56px);
+    }
+
+    .title-sub {
+        margin-top: 8px;
+        font-size: 15px;
+    }
+
+    .title-modes {
+        margin-top: 20px;
+    }
+
+    .mode {
+        width: 200px;
+        padding: 14px 12px 12px;
+        gap: 4px;
+    }
+
+    .mode svg {
+        width: 32px;
+        height: 32px;
+    }
+
+    .mode strong {
+        font-size: 22px;
+    }
+
+    .title-hint {
+        margin-top: 12px;
+    }
+}
+
+@media (max-width: 600px) {
+    .title-modes {
+        gap: 12px;
+        margin-top: 30px;
+    }
+
+    .mode {
+        width: calc((100vw - 52px) / 2);
+        max-width: 200px;
+        padding: 18px 8px 16px;
+    }
+
+    .mode svg {
+        width: 40px;
+        height: 40px;
+    }
+
+    .mode strong {
+        font-size: 21px;
+        white-space: nowrap;
+    }
+
+    .tracker {
+        width: auto;
+    }
+
+    .toast {
+        font-size: 15px;
+    }
+
+    .is-touch .toast {
+        bottom: calc(200px + var(--safe-bottom));
+    }
+
+    .fishcard {
+        bottom: calc(150px + var(--safe-bottom));
+        width: calc(100vw - 24px);
+        gap: 12px;
+        padding: 12px 14px;
+    }
+
+    .fishcard strong {
+        font-size: 19px;
+    }
+
+    .fishcard span {
+        font-size: 12px;
+    }
+
+    /* choices sit above the speaker's name tag instead of covering it */
+    .dialog-choices {
+        bottom: calc(100% + 34px);
+    }
+
+    .dialog-face canvas {
+        width: 48px;
+        height: 48px;
+    }
+
+    .has-face .dialog-name {
+        left: 80px;
+    }
+
+    .has-face .dialog-choices {
+        bottom: calc(100% + 64px);
+    }
+
+    .is-talking.has-face .toast,
+    .is-touch.is-talking.has-face .toast {
+        bottom: calc(250px + var(--safe-bottom));
+    }
+
+    .has-face .fishcard {
+        bottom: calc(220px + var(--safe-bottom));
+    }
+
+    .report-num {
+        font-size: 34px;
+    }
+
+    .report-chart {
+        height: 64px;
+    }
+
+    .report-out:not(:empty) {
+        margin-top: 12px;
+    }
+
+    /* the fish log turns into two-line entries: "Bluegill · 6.5 in" over "The dock · 1:05 PM · Sunny" */
+    .journal-fish thead {
+        display: none;
+    }
+
+    .journal-fish tr {
+        display: block;
+        padding: 8px 0;
+        border-top: 2px dashed var(--line);
+    }
+
+    .journal-fish td {
+        display: inline;
+        padding: 0;
+        border: 0;
+    }
+
+    .journal-fish td:first-child {
+        font-weight: 600;
+    }
+
+    .journal-fish td:nth-child(n + 3) {
+        font-size: 13px;
+        color: var(--muted);
+    }
+
+    .journal-fish td:nth-child(2)::before,
+    .journal-fish td:nth-child(n + 4)::before {
+        content: " · ";
+    }
+
+    .journal-fish td:nth-child(3)::before {
+        content: "\A";
+        white-space: pre;
+    }
+}
